@@ -11,14 +11,18 @@ def get_optimizer_values(metric):
     #this will need to happen before we call do_opt()
     # for now we will just use y=mx+b as an example
 
-    
+    # format arguments and model
     args = config_file.user_config[metric]['x_axis'] + "," + \
             ",".join(config_file.user_config[metric]['optimizer_params'])
     mdl = config_file.user_config[metric]['Model']
+    
+    # insert numbers to equation
     for design_params in config_file.user_config[metric]['design_params']:
         mdl = mdl.replace(design_params, str(config_file.user_config[metric][design_params]))
-
-
+    for devsim_params in config_file.user_config[metric]['devsim_params']:
+        mdl = mdl.replace(devsim_params, str(config_file.user_config[metric][devsim_params]))
+    
+    # retrieve optimized constants
     new_opts = scipy_curve_fit.do_optimization(mdl, args, config_file.user_config[metric]['opt_x_data'], config_file.user_config[metric]['opt_y_data'])
    
     #loop through optimizer params and save new vals

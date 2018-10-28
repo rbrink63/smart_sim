@@ -11,4 +11,19 @@ config_y = {
 	'opt_x_data' : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 	'opt_y_data' : [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0],
 }
-user_config = {'config_y' : config_y,}
+config_Ids = {
+	'Metric' : 'y',
+	'Model' : '(u*C_ox*W * (Vgs-Vt)**2) / (2*L)',
+	'x_axis' : 'Vgs',
+	'design_params' : ['W', 'L'],
+	'devsim_params' : ['C_ox', 'Vt'],
+	'optimizer_params' : ['u'],
+	'u' : 1.0,
+	'W' : 1,
+	'L' : 0.5,
+	'C_ox' : 1e-14,
+	'Vt' : 4.5,
+	'opt_x_data' : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+	'opt_y_data' : [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0],
+}
+user_config = {'config_y' : config_y,'config_Ids' : config_Ids,}
