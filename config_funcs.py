@@ -2,7 +2,7 @@ import config_file
 import scipy_curve_fit
 import sys
 
-def get_optimizer_values(metric, csv_file):
+def get_optimizer_values(metric):
     
     #run optimizer
     #the main function will call update file to overwrite config_data.py to store the values
@@ -18,9 +18,8 @@ def get_optimizer_values(metric, csv_file):
     for design_params in config_file.user_config[metric]['design_params']:
         mdl = mdl.replace(design_params, str(config_file.user_config[metric][design_params]))
 
-    print(mdl)
 
-    new_opts = scipy_curve_fit.do_optimization(mdl, args, csv_file)
+    new_opts = scipy_curve_fit.do_optimization(mdl, args, config_file.user_config[metric]['opt_x_data'], config_file.user_config[metric]['opt_y_data'])
    
     #loop through optimizer params and save new vals
     #config_file won't actually be updated until main() overwrites it
@@ -65,23 +64,17 @@ def save_design_value(metric, param, new_value):
 def main():
     #usage python3 execName config_<metric name>
     
-    if len(sys.argv) != 3:
-        print('use two and only two command line argument')
+    if len(sys.argv) != 2:
+        print('use one and only one command line argument')
         sys.exit()
     if sys.argv[1] not in config_file.user_config:
         print('metric not found in config file')
         sys.exit()
-    if sys.argv[2][-4:] != '.csv':
-        print('provide .csv file as 2nd argument')
-        sys.exit()
 
     config_metric = sys.argv[1] 
-    csv_file = sys.argv[2]
-    print("csv_file")
-    print(csv_file)
     #print (config_metric)
     #get_devsim_values(config_metric, 11)
-    get_optimizer_values(config_metric, csv_file)
+    get_optimizer_values(config_metric)
 #    save_design_value(config_metric, 'c', 5)
     update_config_file()
         
