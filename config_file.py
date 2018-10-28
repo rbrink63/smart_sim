@@ -12,7 +12,7 @@ config_y = {
 	'opt_y_data' : [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0],
 }
 config_Ids = {
-	'Metric' : 'y',
+	'Metric' : 'Ids',
 	'Model' : '(u*C_ox*W * (Vgs-Vt)**2) / (2*L)',
 	'x_axis' : 'Vgs',
 	'design_params' : ['W', 'L'],
