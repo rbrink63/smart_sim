@@ -11,7 +11,16 @@ def get_optimizer_values(metric, csv_file):
     #this will need to happen before we call do_opt()
     # for now we will just use y=mx+b as an example
 
-    new_opts = scipy_curve_fit.do_optimization(config_file.user_config[metric]['Model'], csv_file)
+    
+    args = config_file.user_config[metric]['x_axis'] + "," + \
+            ",".join(config_file.user_config[metric]['optimizer_params'])
+    mdl = config_file.user_config[metric]['Model']
+    for design_params in config_file.user_config[metric]['design_params']:
+        mdl = mdl.replace(design_params, str(config_file.user_config[metric][design_params]))
+
+    print(mdl)
+
+    new_opts = scipy_curve_fit.do_optimization(mdl, args, csv_file)
    
     #loop through optimizer params and save new vals
     #config_file won't actually be updated until main() overwrites it
@@ -68,6 +77,8 @@ def main():
 
     config_metric = sys.argv[1] 
     csv_file = sys.argv[2]
+    print("csv_file")
+    print(csv_file)
     #print (config_metric)
     #get_devsim_values(config_metric, 11)
     get_optimizer_values(config_metric, csv_file)

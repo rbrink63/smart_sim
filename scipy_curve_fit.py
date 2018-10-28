@@ -3,13 +3,10 @@ import csv
 import numpy as np
 from scipy.optimize import curve_fit
 
-def func(x,b,c): 
-    return 2*x + b/c
+def do_optimization(model, args, csv_file):
+   
+    func = eval("lambda {}:{}".format(args,model))
 
-
-
-def do_optimization(model, csv_file):
-    
     res = []
     with open(csv_file, "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
