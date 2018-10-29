@@ -21,7 +21,7 @@ config_Ids = {
 	'u' : 1.0,
 	'W' : 1,
 	'L' : 0.5,
-	'C_ox' : ['devsim input line', 1e-14],
+	'C_ox' : ['devsim input line', ''],
 	'Vt' : ['devsim input line', 4.5],
 	'opt_x_data' : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 	'opt_y_data' : [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0],
