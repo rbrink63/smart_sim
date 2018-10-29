@@ -6,7 +6,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox 
 import config_file
-from config_funcs import get_optimizer_values
+from config_funcs import get_optimizer_values, get_devsim_values
 
 # Create a root window that will be hidden. Will act as a driver to 
 # all other windows.
@@ -80,14 +80,14 @@ class IntroPage:
             modelEq = modelEq.replace(index, str(query[index]))
 
         if len(devsim_params) > 0:
-            if query['f{devsim_params[0]}'][1] == "":
-                print ('it worked')
-                get_devsim_values(selected_model)
-                query = config_file.user_config[selected_model]
+            for index,val in enumerate(devsim_params):
+                if query[devsim_params[index]][1] == "":
+                    get_devsim_values(selected_model)
+                    query = config_file.user_config[selected_model]
 
         for index in devsim_params:
             #here is where devsim may need to be called
-            modelEq = modelEq.replace(index, str(query[index]))
+            modelEq = modelEq.replace(index, str(query[index][1]))
 
         if len(optimizer_params) > 0:
             if query[optimizer_params[0]] == "":
