@@ -4,6 +4,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox 
 import config_file
+from config_funcs import get_optimizer_values
 
 # Create a root window that will be hidden. Will act as a driver to 
 # all other windows.
@@ -51,8 +52,7 @@ class IntroPage:
 		
 		#Called when the user makes a selection within the combobox
 		def callback(eventObject):
-			self.Open()
-			print(self.text.get())
+			self.Open(self.text.get())
 
 		self.combo.bind("<<ComboboxSelected>>", callback)
 	
@@ -60,9 +60,46 @@ class IntroPage:
 	def close(self):
 		self.currentWindow.destroy()
 	#Opens the MainPage
-	def Open(self):
-		self.app = MainPage()
+	def Open(self, selection):
+		#TODO: Most of this code needs to be placed in a global function of some sort.
+		selected_model = "config_"+selection
+		query = config_file.user_config[selected_model]
+
+		#get params
+		design_params = query["design_params"]
+		devsim_params = query["devsim_params"]
+		optimizer_params = query["optimizer_params"]
+		#2d array to hold all types of params
+		allParams = [design_params, devsim_params, optimizer_params]
+
+		#start parsing the model equation and filling in values
+		modelEq = query["Model"]
+		for index in design_params:
+			modelEq = modelEq.replace(index, str(query[index]))
+		for index in devsim_params:
+			#here is where devsim may need to be called
+			modelEq = modelEq.replace(index, str(query[index]))
+
+		if len(optimizer_params) > 0:
+			if query[optimizer_params[0]] == "":
+				get_optimizer_values(selected_model)
+				query = config_file.user_config[selected_model]
+
+		for index in optimizer_params:
+			#check if param values exist
+			modelEq = modelEq.replace(index, str(query[index]))
+
+		#generate data points
+		opt_x_data = query["opt_x_data"]
+		x_axis = query["x_axis"]
+		Y_dataPoints = []
+		for dataPoint in opt_x_data:
+			currentEq = modelEq.replace(x_axis, str(dataPoint))
+			Y_dataPoints.append(eval(currentEq))
+		#Code that needs to be placed elsewhere stops here
 		self.close()
+		self.app = MainPage(opt_x_data, Y_dataPoints, selection, allParams)
+	
 	# Called when the user hits 'X'
 	def on_closing(self):
 		self.currentWindow.destroy
@@ -71,7 +108,7 @@ class IntroPage:
 		
 
 class MainPage:
-	def __init__(self):
+	def __init__(self, X_dataPoints, Y_dataPoints, metricName, allParams):
 
 		#Create the current window
 		self.currentWindow = tk.Toplevel(root)
@@ -113,36 +150,68 @@ class MainPage:
 		#Called when the user makes a selection within the combobox
 		def callback(eventObject):
 			self.Open()
-			print(self.text.get())
 
 		self.combo.bind("<<ComboboxSelected>>", callback)
 
 		#parameters
-		self.paramLbl = tk.Label(self.currentWindow, text="Parameters Shown Below")
+		self.paramLbl = tk.Label(self.currentWindow, text="Design Parameters")
 		self.paramLbl.grid(column=0, row=0)
-		self.paramLbl.place(relx=.3, rely=.4, anchor="e")
+		self.paramLbl.place(relx=.24, rely=.4, anchor="e")
 		self.paramLbl.config(font=("Courier", 12))
 
+		#dynamically create buttons representing the params
+		design_buttons = []
+		counter = 0
+		for index in allParams[0]:
+			self.button = tk.Button(self.currentWindow, text=allParams[0][counter], bg="deep sky blue")
+			self.button.grid(column=0, row=0)
+			self.button.place(relx=.12+(counter*.1), rely=.45, anchor="e")
+			design_buttons.append(self.button)
+
+		#parameters
+		self.paramLbl = tk.Label(self.currentWindow, text="Devsim Parameters")
+		self.paramLbl.grid(column=0, row=0)
+		self.paramLbl.place(relx=.24, rely=.5, anchor="e")
+		self.paramLbl.config(font=("Courier", 12))
+
+		devsim_buttons = []
+		counter = 0
+		for index in allParams[1]:
+			self.button = tk.Button(self.currentWindow, text=allParams[1][counter], bg="deep sky blue")
+			self.button.grid(column=0, row=0)
+			self.button.place(relx=.12+(counter*.1), rely=.55, anchor="e")
+			devsim_buttons.append(self.button)
+
+		#parameters
+		self.paramLbl = tk.Label(self.currentWindow, text="opt Parameters")
+		self.paramLbl.grid(column=0, row=0)
+		self.paramLbl.place(relx=.24, rely=.6, anchor="e")
+		self.paramLbl.config(font=("Courier", 12))
+
+		opt_buttons = []
+		counter = 0
+		for index in allParams[2]:
+			self.button = tk.Button(self.currentWindow, text=allParams[2][counter], bg="deep sky blue")
+			self.button.grid(column=0, row=0)
+			self.button.place(relx=.12+(counter*.1), rely=.65, anchor="e")
+			opt_buttons.append(self.button)
 
 		#GRAPH
-
-		plt.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
-		plt.xlabel('time (s)')
-		plt.ylabel('voltage (mV)')
-		plt.title('About as simple as it gets, folks')
+		plt.plot(X_dataPoints, Y_dataPoints)
+		plt.xlabel('X_Axis_Title')
+		plt.ylabel('Y_Axis_Title')
+		plt.title("Metric: "+metricName)
 		plt.grid(True)
-		plt.savefig("test.png")
+		plt.savefig(metricName+".png")
 		plt.show()
-		self.canvas = FigureCanvasTkAgg(self.f, self.currentWindow)
-		self.canvas.show()
 		
 	def close_windows(self):
 		self.self.currentWindow.destroy()
 	# Called when the user hits 'X'
 	def on_closing(self):
 		self.currentWindow.destroy
-		#if messagebox.askokcancel("Quit", "Do you want to quit?"):
-		root.destroy()
+		if messagebox.askokcancel("Quit", "Do you want to quit?"):
+			root.destroy()
 
 def main():
 	app = IntroPage()
