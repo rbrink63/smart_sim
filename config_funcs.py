@@ -1,6 +1,7 @@
 import config_file
 import scipy_curve_fit
 import sys
+import os
 
 def get_optimizer_values(metric):
     
@@ -31,17 +32,22 @@ def get_optimizer_values(metric):
     for idx, param in enumerate(config_file.user_config[metric]['optimizer_params']):
         config_file.user_config[metric][param] = new_opts[idx]
 
+    update_config_file()
 
-def get_devsim_values(metric, devsim_dummy):
+def get_devsim_values(metric):
 #find all devsim commands in the metric entry of the config file
     for param in config_file.user_config[metric]['devsim_params']:
         #run devsim
         #fake it for now
         #this updates the local copy of config_data we imported
         #the main function will overwrite config_data.py to store the values
-        config_file.user_config[metric][param][1] = devsim_dummy
+
+        os.system('ruby /Users/reidwahlbrink/semester/CS_499/devsim/devsim -o output.dso input.dsi')
+        #need to parse output.dso
+        config_file.user_config[metric][param][1] = 11 
 
 
+    update_config_file()
 
 def update_config_file():
     #store the results in the config file
@@ -65,21 +71,20 @@ def save_design_value(metric, param, new_value):
     config_file.user_config[metric][param] = new_value
 
 
-def main():
-    #usage python3 execName config_<metric name>
-    
-    if len(sys.argv) != 2:
-        print('use one and only one command line argument')
-        sys.exit()
-    if sys.argv[1] not in config_file.user_config:
-        print('metric not found in config file')
-        sys.exit()
-
-    config_metric = sys.argv[1] 
-    #print (config_metric)
-    #get_devsim_values(config_metric, 11)
-    get_optimizer_values(config_metric)
-#    save_design_value(config_metric, 'c', 5)
-    update_config_file()
-        
-main()
+#def main():
+#    #usage python3 execName config_<metric name>
+#    
+#    if len(sys.argv) != 2:
+#        print('use one and only one command line argument')
+#        sys.exit()
+#    if sys.argv[1] not in config_file.user_config:
+#        print('metric not found in config file')
+#        sys.exit()
+#
+#    config_metric = sys.argv[1] 
+#    #print (config_metric)
+#    get_devsim_values(config_metric)
+#    #get_optimizer_values(config_metric)
+##    save_design_value(config_metric, 'c', 5)
+#        
+#main()
