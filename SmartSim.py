@@ -78,6 +78,12 @@ class IntroPage:
 		modelEq = query["Model"]
 		for index in design_params:
 			modelEq = modelEq.replace(index, str(query[index]))
+
+        if len(devsim_params) > 0:
+            if query['f{devsim_params[0]}'][1] == "":
+                print ('it worked')
+                get_devsim_values(selected_model)
+                query = config_file.user_config[selected_model]
 		for index in devsim_params:
 			#here is where devsim may need to be called
 			modelEq = modelEq.replace(index, str(query[index]))
