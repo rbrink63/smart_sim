@@ -63,51 +63,10 @@ class IntroPage:
         self.currentWindow.destroy()
     #Opens the MainPage
     def Open(self, selection):
-        #TODO: Most of this code needs to be placed in a global function of some sort.
-        selected_model = "config_"+selection
-        query = config_file.user_config[selected_model]
-
-        #get params
-        design_params = query["design_params"]
-        devsim_params = query["devsim_params"]
-        optimizer_params = query["optimizer_params"]
-        #2d array to hold all types of params
-        allParams = [design_params, devsim_params, optimizer_params]
-
-        #start parsing the model equation and filling in values
-        modelEq = query["Model"]
-        for index in design_params:
-            modelEq = modelEq.replace(index, str(query[index]))
-
-        if len(devsim_params) > 0:
-            for index,val in enumerate(devsim_params):
-                if query[devsim_params[index]][1] == "":
-                    get_devsim_values(selected_model)
-                    query = config_file.user_config[selected_model]
-
-        for index in devsim_params:
-            #here is where devsim may need to be called
-            modelEq = modelEq.replace(index, str(query[index][1]))
-
-        if len(optimizer_params) > 0:
-            if query[optimizer_params[0]] == "":
-                get_optimizer_values(selected_model)
-                query = config_file.user_config[selected_model]
-
-        for index in optimizer_params:
-            #check if param values exist
-            modelEq = modelEq.replace(index, str(query[index]))
-
-        #generate data points
-        opt_x_data = query["opt_x_data"]
-        x_axis = query["x_axis"]
-        Y_dataPoints = []
-        for dataPoint in opt_x_data:
-            currentEq = modelEq.replace(x_axis, str(dataPoint))
-            Y_dataPoints.append(eval(currentEq))
         #Code that needs to be placed elsewhere stops here
         self.close()
-        self.app = MainPage(opt_x_data, Y_dataPoints, selection, allParams)
+        loadModel(selection)
+        #self.app = MainPage(opt_x_data, Y_dataPoints, selection, allParams)
     
     # Called when the user hits 'X'
     def on_closing(self):
@@ -221,6 +180,51 @@ class MainPage:
         self.currentWindow.destroy
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             root.destroy()
+
+def loadModel(selection):
+    selected_model = "config_"+selection
+    query = config_file.user_config[selected_model]
+
+    #get params
+    design_params = query["design_params"]
+    devsim_params = query["devsim_params"]
+    optimizer_params = query["optimizer_params"]
+    #2d array to hold all types of params
+    allParams = [design_params, devsim_params, optimizer_params]
+
+    #start parsing the model equation and filling in values
+    modelEq = query["Model"]
+    for index in design_params:
+        modelEq = modelEq.replace(index, str(query[index]))
+
+    if len(devsim_params) > 0:
+        for index,val in enumerate(devsim_params):
+            if query[devsim_params[index]][1] == "":
+                get_devsim_values(selected_model)
+                query = config_file.user_config[selected_model]
+
+    for index in devsim_params:
+        modelEq = modelEq.replace(index, str(query[index][1]))
+
+    if len(optimizer_params) > 0:
+        if query[optimizer_params[0]] == "":
+            get_optimizer_values(selected_model)
+            query = config_file.user_config[selected_model]
+
+    for index in optimizer_params:
+        #check if param values exist
+        modelEq = modelEq.replace(index, str(query[index]))
+
+    #generate data points
+    opt_x_data = query["opt_x_data"]
+    x_axis = query["x_axis"]
+    Y_dataPoints = []
+    for dataPoint in opt_x_data:
+        currentEq = modelEq.replace(x_axis, str(dataPoint))
+        Y_dataPoints.append(eval(currentEq))
+
+    MainPage(opt_x_data, Y_dataPoints, selection, allParams)
+#end of loadModel
 
 def main():
     app = IntroPage()
