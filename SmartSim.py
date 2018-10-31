@@ -1,7 +1,11 @@
+#SmartSim GUI
+
+#Imports
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
-#import numpy as np 
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox 
@@ -11,6 +15,7 @@ from config_funcs import get_optimizer_values, get_devsim_values
 # Create a root window that will be hidden. Will act as a driver to 
 # all other windows.
 root = tk.Tk()
+#root.geometry("500,100 300, 300")
 root.withdraw()
 
 class IntroPage:
@@ -39,6 +44,7 @@ class IntroPage:
         #Create a List that will be used to fill the comboBox
         self.my_list = []
         for metric in config_file.user_config:
+            print("here")
             self.my_list.append(config_file.user_config[metric]["Metric"])
 
         #COMBOBOX: Select Model to Load
@@ -76,25 +82,22 @@ class MainPage:
         self.currentWindow = tk.Toplevel(root)
         self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.currentWindow.title("MainPage")
-        self.currentWindow.geometry('{}x{}'.format(800, 650))
+        self.currentWindow.geometry("1000x680+200+0")
+        #self.currentWindow.geometry('{}x{}'.format(1000, 650))
         #LABEL: SmartSim title 
         self.title = tk.Label(self.currentWindow, text="SmartSim")
-        self.title.grid(column=0, row=0)
-        self.title.place(relx=.5, rely=.07, anchor="center")
+        self.title.place(relx=.5, rely=.05, anchor="center")
         self.title.config(font=("Courier", 24))
         #LABEL: Other options
         self.otherLbl = tk.Label(self.currentWindow, text="Other Options")
-        self.otherLbl.grid(column=0, row=0)
-        self.otherLbl.place(relx=.2, rely=.15, anchor="e")
+        self.otherLbl.place(relx=.025, rely=.12)
         self.otherLbl.config(font=("Courier", 12))
         #BUTTON: Overlay Button
         self.overlayBtn = tk.Button(self.currentWindow, text="Overlay Simulated Data", bg="deep sky blue")
-        self.overlayBtn.grid(column=0, row=0)
-        self.overlayBtn.place(relx=.25, rely=.19, anchor="e")
+        self.overlayBtn.place(relx=.025, rely=.16)
         #LABEL: Select new metric 
         self.metricLbl = tk.Label(self.currentWindow, text="Select New Metric")
-        self.metricLbl.grid(column=0, row=0)
-        self.metricLbl.place(relx=.25, rely=.28, anchor="e")
+        self.metricLbl.place(relx=.025, rely=.23)
         self.metricLbl.config(font=("Courier", 12))
         
         #Create a List that will be used to populate the combobox
@@ -110,7 +113,7 @@ class MainPage:
         self.combo['values'] = self.my_list
         self.combo.current(1)
         self.combo.grid(column=0, row=1)
-        self.combo.place(relx=.25, rely=.315, anchor="e")
+        self.combo.place(relx=.025, rely=.27)
         
         #Called when the user makes a selection within the combobox
         def callback(eventObject):
@@ -119,56 +122,98 @@ class MainPage:
 
         #LABEL: Design Parameters
         self.paramLbl = tk.Label(self.currentWindow, text="Design Parameters")
-        self.paramLbl.grid(column=0, row=0)
-        self.paramLbl.place(relx=.24, rely=.4, anchor="e")
+
+        self.paramLbl.place(relx=.025, rely=.32)
         self.paramLbl.config(font=("Courier", 12))
 
         #dynamically create buttons representing the params
         design_buttons = []
         counter = 0
+        column = 0
+        row = 0
         for index in allParams[0]:
-            self.button = tk.Button(self.currentWindow, text=allParams[0][counter], bg="deep sky blue")
-            self.button.grid(column=0, row=0)
-            self.button.place(relx=.12+(counter*.1), rely=.45, anchor="e")
-            design_buttons.append(self.button)
+            #LABEL: label for the current param
+            self.Lbl = tk.Label(self.currentWindow, text=allParams[0][counter]+":")
+            self.Lbl.place(relx=.025+(column*.1), rely=.36+(row*.05))
+            self.Lbl.config(font=("Courier", 12))            
+
+            self.entry = tk.Entry(self.currentWindow, width=8)
+            self.entry.place(relx=.051+(column*.1), rely=.36+(row*.05))
+            design_buttons.append(self.entry)
+            counter = counter + 1
+            row = row + 1
+            if row == 3:
+                row = 0
+                column = column + 1
 
         #LABEL: Devsim Parameters
         self.paramLbl = tk.Label(self.currentWindow, text="Devsim Parameters")
-        self.paramLbl.grid(column=0, row=0)
-        self.paramLbl.place(relx=.24, rely=.5, anchor="e")
+        self.paramLbl.place(relx=.025, rely=.52)
         self.paramLbl.config(font=("Courier", 12))
 
         #Dynamically create buttons representing the params
         devsim_buttons = []
         counter = 0
+        column = 0
+        row = 0
         for index in allParams[1]:
-            self.button = tk.Button(self.currentWindow, text=allParams[1][counter], bg="deep sky blue")
-            self.button.grid(column=0, row=0)
-            self.button.place(relx=.12+(counter*.1), rely=.55, anchor="e")
-            devsim_buttons.append(self.button)
+            #LABEL: label for the current param
+            self.Lbl = tk.Label(self.currentWindow, text=allParams[1][counter]+":")
+            self.Lbl.place(relx=.025+(column*.1), rely=.56+(row*.05))
+            self.Lbl.config(font=("Courier", 12))            
+
+            self.entry = tk.Entry(self.currentWindow, width=8)
+            self.entry.place(relx=.051+(column*.1), rely=.56+(row*.05))
+            design_buttons.append(self.entry)
+            counter = counter + 1
+            row = row + 1
+            if row == 3:
+                row = 0
+                column = column + 1
 
         #LABEL: Optimizer Parameters
         self.paramLbl = tk.Label(self.currentWindow, text="opt Parameters")
-        self.paramLbl.grid(column=0, row=0)
-        self.paramLbl.place(relx=.24, rely=.6, anchor="e")
+        self.paramLbl.place(relx=.025, rely=.72)
         self.paramLbl.config(font=("Courier", 12))
         #Dynamically create buttons representing the params
         opt_buttons = []
         counter = 0
+        column = 0
+        row = 0
         for index in allParams[2]:
-            self.button = tk.Button(self.currentWindow, text=allParams[2][counter], bg="deep sky blue")
-            self.button.grid(column=0, row=0)
-            self.button.place(relx=.12+(counter*.1), rely=.65, anchor="e")
-            opt_buttons.append(self.button)
+            #LABEL: label for the current param
+            self.Lbl = tk.Label(self.currentWindow, text=allParams[2][counter]+":")
+            self.Lbl.place(relx=.025+(column*.1), rely=.76+(row*.05))
+            self.Lbl.config(font=("Courier", 12))            
 
+            self.entry = tk.Entry(self.currentWindow, width=8)
+            self.entry.place(relx=.051+(column*.1), rely=.76+(row*.05))
+            design_buttons.append(self.entry)
+            counter = counter + 1
+            row = row + 1
+            if row == 3:
+                row = 0
+                column = column + 1
+        
+        #GRAPH        
+        fig = Figure(figsize=(6,6))
+        plot = fig.add_subplot(111)
+        plot.plot(X_dataPoints, Y_dataPoints, color='blue')
+        plot.set_title ("Estimation Grid", fontsize=14)
+        plot.set_ylabel("Y", fontsize=14)
+        plot.grid(True)
+        plot.set_xlabel("X", fontsize=14)
+        canvas = FigureCanvasTkAgg(fig, master=self.currentWindow)
+        canvas.get_tk_widget().place(relx=0.39, rely=0.1)
+        canvas.draw()
         #GRAPH
-        plt.plot(X_dataPoints, Y_dataPoints)
-        plt.xlabel('X_Axis_Title')
-        plt.ylabel('Y_Axis_Title')
-        plt.title("Metric: "+metricName)
-        plt.grid(True)
-        plt.savefig(metricName+".png")
-        plt.show()
+        #plt.plot(X_dataPoints, Y_dataPoints)
+        #plt.xlabel('X_Axis_Title')
+        #plt.ylabel('Y_Axis_Title')
+        #plt.title("Metric: "+metricName)
+        #plt.grid(True)
+        #plt.savefig(metricName+".png")
+        #plt.show()
     #Called to close the current window when transitioning to a new window    
     def close_windows(self):
         self.self.currentWindow.destroy()

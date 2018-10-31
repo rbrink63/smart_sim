@@ -11,6 +11,27 @@ config_y = {
 	'opt_x_data' : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 	'opt_y_data' : [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0],
 }
+config_x = {
+	'Metric' : 'x',
+	'Model' : 'm*a*d*x + c/b',
+	'x_axis' : 'x',
+	'design_params' : ['m', 'a', 'd', 'h', 'i'],
+	'devsim_params' : ['e', 'f', 'g'],
+	'optimizer_params' : ['b', 'c', 'z'],
+	'm' : -0.5,
+	'a' : 1,
+	'd' : 1,
+	'h' : 1,
+	'i' : 1,
+	'b' : 0.9999999999961197,
+	'c' : 4.999999999980599,
+	'z' : 4.999999999980599,
+	'e' : ['devsim input line', 11],
+	'f' : ['devsim input line', 11],
+	'g' : ['devsim input line', 11],
+	'opt_x_data' : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+	'opt_y_data' : [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0],
+}
 config_Ids = {
 	'Metric' : 'Ids',
 	'Model' : '(u*C_ox*W * (Vgs-Vt)**2) / (2*L)',
@@ -26,4 +47,4 @@ config_Ids = {
 	'opt_x_data' : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 	'opt_y_data' : [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0],
 }
-user_config = {'config_y' : config_y,'config_Ids' : config_Ids,}
+user_config = {'config_y' : config_y,'config_Ids' : config_Ids,'config_x' : config_x}
