@@ -117,7 +117,7 @@ class MainPage:
         
         #Called when the user makes a selection within the combobox
         def callback(eventObject):
-            self.Open()
+            self.Close(self.text.get())
         self.combo.bind("<<ComboboxSelected>>", callback)
 
         #LABEL: Design Parameters
@@ -215,8 +215,9 @@ class MainPage:
         #plt.savefig(metricName+".png")
         #plt.show()
     #Called to close the current window when transitioning to a new window    
-    def close_windows(self):
-        self.self.currentWindow.destroy()
+    def Close(self, selection):
+        self.currentWindow.destroy()
+        loadModel(selection)
     # Captures the event of a user hitting the red 'X' button to close a window
     def on_closing(self):
         self.currentWindow.destroy
