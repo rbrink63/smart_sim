@@ -24,7 +24,8 @@ class IntroPage:
         self.currentWindow = tk.Toplevel(root)
         self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.currentWindow.title("IntroPage")
-        self.currentWindow.geometry('{}x{}'.format(800, 650))
+        self.currentWindow.geometry("600x300+300+0")
+        self.currentWindow.geometry('{}x{}'.format(700, 500))
         #LABEL: SmartSim title 
         self.title = tk.Label(self.currentWindow, text="SmartSim")
         self.title.grid(column=0, row=0)
@@ -44,7 +45,6 @@ class IntroPage:
         #Create a List that will be used to fill the comboBox
         self.my_list = []
         for metric in config_file.user_config:
-            print("here")
             self.my_list.append(config_file.user_config[metric]["Metric"])
 
         #COMBOBOX: Select Model to Load
@@ -77,32 +77,44 @@ class IntroPage:
             root.destroy()     
 
 class MainPage:
-    def __init__(self, X_dataPoints, Y_dataPoints, metricName, allParams):
+    design_buttons = []
+    def __init__(self, X_dataPoints, Y_dataPoints, metricName, allParams, all_param_values):
+        self.design_buttons.clear()
         #Create the current window
         self.currentWindow = tk.Toplevel(root)
         self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.currentWindow.title("MainPage")
-        self.currentWindow.geometry("1000x680+200+0")
-        #self.currentWindow.geometry('{}x{}'.format(1000, 650))
+        self.currentWindow.geometry("1080x680+200+0")
         #LABEL: SmartSim title 
         self.title = tk.Label(self.currentWindow, text="SmartSim")
         self.title.place(relx=.5, rely=.05, anchor="center")
         self.title.config(font=("Courier", 24))
         #LABEL: Other options
         self.otherLbl = tk.Label(self.currentWindow, text="Other Options")
-        self.otherLbl.place(relx=.025, rely=.12)
+        self.otherLbl.place(relx=.02, rely=.1)
         self.otherLbl.config(font=("Courier", 12))
         #BUTTON: Overlay Button
         self.overlayBtn = tk.Button(self.currentWindow, text="Overlay Simulated Data", bg="deep sky blue")
-        self.overlayBtn.place(relx=.025, rely=.16)
+        self.overlayBtn.place(relx=.02, rely=.14)
+        #BUTTON: Redo-Config Button
+        self.configBtn = tk.Button(self.currentWindow, text="Redo-Config", command=lambda: self.RedoConfig(metricName), bg="deep sky blue")
+        self.configBtn.place(relx=.195, rely=.14)
+        #BUTTON: Submit Button
+        self.SubmitBtn = tk.Button(self.currentWindow, text="Submit", command=lambda: self.Submit(metricName,self.design_buttons), bg="deep sky blue")
+        self.SubmitBtn.place(relx=.3, rely=.14)
         #LABEL: Select new metric 
         self.metricLbl = tk.Label(self.currentWindow, text="Select New Metric")
-        self.metricLbl.place(relx=.025, rely=.23)
+        self.metricLbl.place(relx=.02, rely=.2)
         self.metricLbl.config(font=("Courier", 12))
+        #LABEL: Edit Parameter 
+        self.editLbl = tk.Label(self.currentWindow, text="Edit Parameter")
+        self.editLbl.place(relx=.2, rely=.2)
+        self.editLbl.config(font=("Courier", 12))
         
         #Create a List that will be used to populate the combobox
         self.my_list = []
 
+        ### COMBOBOX for Select Metric ###
         #Load all models that are currently stored in the configuration file
         for metric in config_file.user_config:
             self.my_list.append(config_file.user_config[metric]["Metric"])
@@ -113,85 +125,44 @@ class MainPage:
         self.combo['values'] = self.my_list
         self.combo.current(1)
         self.combo.grid(column=0, row=1)
-        self.combo.place(relx=.025, rely=.27)
+        self.combo.place(relx=.02, rely=.24)
         
         #Called when the user makes a selection within the combobox
         def callback(eventObject):
             self.Close(self.text.get())
         self.combo.bind("<<ComboboxSelected>>", callback)
 
-        #LABEL: Design Parameters
-        self.paramLbl = tk.Label(self.currentWindow, text="Design Parameters")
+        ### COMBOBOX for Edit ###
+        #Sting to store the comboBox selection
+        self.text2 = tk.StringVar() 
+        self.editCombo = ttk.Combobox(self.currentWindow, textvariable=self.text2)
+        self.editCombo['values'] = allParams
+        self.editCombo.current(1)
+        self.editCombo.grid(column=0, row=1)
+        self.editCombo.place(relx=.2, rely=.24)
+        
+        #Called when the user makes a selection within the combobox
+        def editCallback(eventObject):
+            self.Edit(self.text.get())
+        self.editCombo.bind("<<ComboboxSelected>>", editCallback)
 
-        self.paramLbl.place(relx=.025, rely=.32)
+        #LABEL: Parameters
+        self.paramLbl = tk.Label(self.currentWindow, text="Parameters")
+        self.paramLbl.place(relx=.02, rely=.32)
         self.paramLbl.config(font=("Courier", 12))
 
-        #dynamically create buttons representing the params
-        design_buttons = []
-        counter = 0
+		##### Design Parameters #####
         column = 0
         row = 0
-        for index in allParams[0]:
+        for index in range(len(allParams)):
             #LABEL: label for the current param
-            self.Lbl = tk.Label(self.currentWindow, text=allParams[0][counter]+":")
-            self.Lbl.place(relx=.025+(column*.1), rely=.36+(row*.05))
-            self.Lbl.config(font=("Courier", 12))            
-
-            self.entry = tk.Entry(self.currentWindow, width=8)
-            self.entry.place(relx=.051+(column*.1), rely=.36+(row*.05))
-            design_buttons.append(self.entry)
-            counter = counter + 1
+            floatValue = float(all_param_values[index])
+            floatValue = round(floatValue, 2)
+            self.Lbl = tk.Label(self.currentWindow, text=allParams[index]+": "+str(floatValue))
+            self.Lbl.place(relx=.02+(column*.1), rely=.36+(row*.025))
+            self.Lbl.config(font=("Courier", 9)) 
             row = row + 1
-            if row == 3:
-                row = 0
-                column = column + 1
-
-        #LABEL: Devsim Parameters
-        self.paramLbl = tk.Label(self.currentWindow, text="Devsim Parameters")
-        self.paramLbl.place(relx=.025, rely=.52)
-        self.paramLbl.config(font=("Courier", 12))
-
-        #Dynamically create buttons representing the params
-        devsim_buttons = []
-        counter = 0
-        column = 0
-        row = 0
-        for index in allParams[1]:
-            #LABEL: label for the current param
-            self.Lbl = tk.Label(self.currentWindow, text=allParams[1][counter]+":")
-            self.Lbl.place(relx=.025+(column*.1), rely=.56+(row*.05))
-            self.Lbl.config(font=("Courier", 12))            
-
-            self.entry = tk.Entry(self.currentWindow, width=8)
-            self.entry.place(relx=.051+(column*.1), rely=.56+(row*.05))
-            design_buttons.append(self.entry)
-            counter = counter + 1
-            row = row + 1
-            if row == 3:
-                row = 0
-                column = column + 1
-
-        #LABEL: Optimizer Parameters
-        self.paramLbl = tk.Label(self.currentWindow, text="opt Parameters")
-        self.paramLbl.place(relx=.025, rely=.72)
-        self.paramLbl.config(font=("Courier", 12))
-        #Dynamically create buttons representing the params
-        opt_buttons = []
-        counter = 0
-        column = 0
-        row = 0
-        for index in allParams[2]:
-            #LABEL: label for the current param
-            self.Lbl = tk.Label(self.currentWindow, text=allParams[2][counter]+":")
-            self.Lbl.place(relx=.025+(column*.1), rely=.76+(row*.05))
-            self.Lbl.config(font=("Courier", 12))            
-
-            self.entry = tk.Entry(self.currentWindow, width=8)
-            self.entry.place(relx=.051+(column*.1), rely=.76+(row*.05))
-            design_buttons.append(self.entry)
-            counter = counter + 1
-            row = row + 1
-            if row == 3:
+            if row == 15:
                 row = 0
                 column = column + 1
         
@@ -204,7 +175,7 @@ class MainPage:
         plot.grid(True)
         plot.set_xlabel("X", fontsize=14)
         canvas = FigureCanvasTkAgg(fig, master=self.currentWindow)
-        canvas.get_tk_widget().place(relx=0.39, rely=0.1)
+        canvas.get_tk_widget().place(relx=0.43, rely=0.1)
         canvas.draw()
         #GRAPH
         #plt.plot(X_dataPoints, Y_dataPoints)
@@ -214,6 +185,18 @@ class MainPage:
         #plt.grid(True)
         #plt.savefig(metricName+".png")
         #plt.show()
+
+    def Submit(self, selection, design_buttons):
+        for index in design_buttons:
+            config_file.user_config["config_"+selection][index[0]]= index[1].get()
+        self.currentWindow.destroy()
+        loadModel(selection)
+	#Called to update the paramaters from the configuration file
+    def RedoConfig(self, selection):
+        get_devsim_values("config_"+selection)
+        get_optimizer_values("config_"+selection)
+        self.currentWindow.destroy()
+        loadModel(selection)
     #Called to close the current window when transitioning to a new window    
     def Close(self, selection):
         self.currentWindow.destroy()
@@ -230,20 +213,28 @@ class MainPage:
 def loadModel(selection):
     #Get the name of the selected model
     selected_model = "config_"+selection
+    all_param_values = []
+    allParams = []
     #query will now hold all data for the selected model
     query = config_file.user_config[selected_model]
-
     #get params
     design_params = query["design_params"]
     devsim_params = query["devsim_params"]
     optimizer_params = query["optimizer_params"]
-    #2d array to hold all types of params
-    allParams = [design_params, devsim_params, optimizer_params]
-
-    #start parsing the model equation and filling in actual values for the params
+    #Get the model EQ
     modelEq = query["Model"]
-    #Replace all design parameter variables with their associated values
+
+    #2d array to hold all types of params
+    for index in range(len(design_params)):
+        allParams.append(design_params[index])
+    for index in range(len(devsim_params)):
+        allParams.append(devsim_params[index])
+    for index in range(len(optimizer_params)):
+        allParams.append(optimizer_params[index])
+
+    #start parsing the model equation and filling in actual values for the params. Replace all design parameter variables with their associated values
     for index in design_params:
+        all_param_values.append(str(query[index]))
         modelEq = modelEq.replace(index, str(query[index]))
 
     #Replace all devsim parameter variables with their associated values
@@ -254,6 +245,7 @@ def loadModel(selection):
                 get_devsim_values(selected_model)
                 query = config_file.user_config[selected_model]
     for index in devsim_params:
+        all_param_values.append(str(query[index][1]))
         modelEq = modelEq.replace(index, str(query[index][1]))
 
     #Replace all optimizer parameter variables with their associated values
@@ -263,6 +255,7 @@ def loadModel(selection):
             get_optimizer_values(selected_model)
             query = config_file.user_config[selected_model]
     for index in optimizer_params:
+        all_param_values.append(str(query[index]))
         modelEq = modelEq.replace(index, str(query[index]))
 
     #generate data points
@@ -274,7 +267,7 @@ def loadModel(selection):
         Y_dataPoints.append(eval(currentEq))
 
     #Call the MainPage 
-    MainPage(opt_x_data, Y_dataPoints, selection, allParams)
+    MainPage(opt_x_data, Y_dataPoints, selection, allParams, all_param_values)
 #end of loadModel
 
 def main():
