@@ -18,153 +18,145 @@ root = tk.Tk()
 #root.geometry("500,100 300, 300")
 root.withdraw()
 
+# This class represents the introduction page that first appears when
+# the application is launched
 class IntroPage:
     def __init__(self):
+
         #Create the current window
         self.currentWindow = tk.Toplevel(root)
         self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.currentWindow.title("IntroPage")
-        self.currentWindow.geometry("600x300+300+0")
-        self.currentWindow.geometry('{}x{}'.format(700, 500))
+        self.currentWindow.geometry("500x300+400+0")
+
         #LABEL: SmartSim title 
-        self.title = tk.Label(self.currentWindow, text="SmartSim")
-        self.title.grid(column=0, row=0)
-        self.title.place(relx=.5, rely=.07, anchor="center")
-        self.title.config(font=("Courier", 24))
+        title = tk.Label(self.currentWindow, text="SmartSim")
+        title.grid(column=0, row=0)
+        title.place(relx=.5, rely=.07, anchor="center")
+        title.config(font=("Courier", 24))
+
         #LABEL: Welcome message
-        self.welcomeLbl = tk.Label(self.currentWindow, text="Welcome to the SmartSim development tool.")
-        self.welcomeLbl.grid(column=0, row=0)
-        self.welcomeLbl.place(relx=.5, rely=.2, anchor="center")
-        self.welcomeLbl.config(font=("Courier", 14))
+        welcomeLbl = tk.Label(self.currentWindow, text="Welcome to the SmartSim development tool.")
+        welcomeLbl.place(relx=.5, rely=.2, anchor="center")
+        welcomeLbl.config(font=("Courier", 14))
+
         #LABEL: Select metric
-        self.metricLbl = tk.Label(self.currentWindow, text="Select Metric")
-        self.metricLbl.grid(column=0, row=0)
-        self.metricLbl.place(relx=.5, rely=.35, anchor="center")
-        self.metricLbl.config(font=("Courier", 12))
+        metricLbl = tk.Label(self.currentWindow, text="Select Metric")
+        metricLbl.place(relx=.5, rely=.35, anchor="center")
+        metricLbl.config(font=("Courier", 12))
 
         #Create a List that will be used to fill the comboBox
-        self.my_list = []
+        model_list = []
         for metric in config_file.user_config:
-            self.my_list.append(config_file.user_config[metric]["Metric"])
+            model_list.append(config_file.user_config[metric]["Metric"])
 
         #COMBOBOX: Select Model to Load
-        self.text = tk.StringVar() 
-        self.combo = ttk.Combobox(self.currentWindow, textvariable=self.text)
-        self.combo['values'] = self.my_list
-        self.combo.current(1)
-        self.combo.grid(column=0, row=1)
-        self.combo.place(relx=.5, rely=.4, anchor="center")
+        selected_model = tk.StringVar() 
+        model_combo = ttk.Combobox(self.currentWindow, textvariable=selected_model)
+        model_combo['values'] = model_list
+        model_combo.current(0)
+        model_combo.place(relx=.5, rely=.45, anchor="center")
         
         #Called when the user makes a selection within the combobox
         def callback(eventObject):
-            self.Open(self.text.get())
+            self.Open(selected_model.get())
         # This binds the event that occurs when a user makes a selection 
         # within the combobox to the callback function above.
-        self.combo.bind("<<ComboboxSelected>>", callback)
+        model_combo.bind("<<ComboboxSelected>>", callback)
     
     #Called to close the IntroPage when transitioning to a new page
     def close(self):
         self.currentWindow.destroy()
+
     #Initiates opening the main page which contains the plot
     def Open(self, selection):
         self.close()
         loadModel(selection)
+
     # Captures the event of a user hitting the red 'X' button to close a window
     def on_closing(self):
         self.currentWindow.destroy
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             #The following line will kill the entire application
             root.destroy()     
+###### End of the IntroPage Class ######
 
+### This class represents the main page of the GUI which contains the graph
 class MainPage:
-    design_buttons = []
+
     def __init__(self, X_dataPoints, Y_dataPoints, metricName, allParams, all_param_values):
-        self.design_buttons.clear()
+        
         #Create the current window
         self.currentWindow = tk.Toplevel(root)
         self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.currentWindow.title("MainPage")
         self.currentWindow.geometry("1080x680+200+0")
+
         #LABEL: SmartSim title 
-        self.title = tk.Label(self.currentWindow, text="SmartSim")
-        self.title.place(relx=.5, rely=.05, anchor="center")
-        self.title.config(font=("Courier", 24))
+        title = tk.Label(self.currentWindow, text="SmartSim")
+        title.place(relx=.5, rely=.05, anchor="center")
+        title.config(font=("Courier", 24))
+
         #LABEL: Other options
-        self.otherLbl = tk.Label(self.currentWindow, text="Other Options")
-        self.otherLbl.place(relx=.02, rely=.1)
-        self.otherLbl.config(font=("Courier", 12))
+        otherLbl = tk.Label(self.currentWindow, text="Other Options")
+        otherLbl.place(relx=.02, rely=.1)
+        otherLbl.config(font=("Courier", 12))
+
         #BUTTON: Overlay Button
-        self.overlayBtn = tk.Button(self.currentWindow, text="Overlay Simulated Data", bg="deep sky blue")
-        self.overlayBtn.place(relx=.02, rely=.14)
+        overlayBtn = tk.Button(self.currentWindow, text="Overlay Simulated Data", bg="deep sky blue")
+        overlayBtn.place(relx=.02, rely=.14)
+
         #BUTTON: Redo-Config Button
-        self.configBtn = tk.Button(self.currentWindow, text="Redo-Config", command=lambda: self.RedoConfig(metricName), bg="deep sky blue")
-        self.configBtn.place(relx=.195, rely=.14)
-        #BUTTON: Submit Button
-        self.SubmitBtn = tk.Button(self.currentWindow, text="Submit", command=lambda: self.Submit(metricName,self.design_buttons), bg="deep sky blue")
-        self.SubmitBtn.place(relx=.3, rely=.14)
+        configBtn = tk.Button(self.currentWindow, text="Redo-Config", command=lambda: self.RedoConfig(metricName), bg="deep sky blue")
+        configBtn.place(relx=.195, rely=.14)
+        
         #LABEL: Select new metric 
-        self.metricLbl = tk.Label(self.currentWindow, text="Select New Metric")
-        self.metricLbl.place(relx=.02, rely=.2)
-        self.metricLbl.config(font=("Courier", 12))
+        metricLbl = tk.Label(self.currentWindow, text="Select New Metric")
+        metricLbl.place(relx=.02, rely=.2)
+        metricLbl.config(font=("Courier", 12))
+
         #LABEL: Edit Parameter 
-        self.editLbl = tk.Label(self.currentWindow, text="Edit Parameter")
-        self.editLbl.place(relx=.2, rely=.2)
-        self.editLbl.config(font=("Courier", 12))
+        editLbl = tk.Label(self.currentWindow, text="Edit Parameter")
+        editLbl.place(relx=.2, rely=.2)
+        editLbl.config(font=("Courier", 12))
         
         #Create a List that will be used to populate the combobox
-        self.my_list = []
+        model_list = []
 
         ### COMBOBOX for Select Metric ###
         #Load all models that are currently stored in the configuration file
-        for metric in config_file.user_config:
-            self.my_list.append(config_file.user_config[metric]["Metric"])
+        for model in config_file.user_config:
+            model_list.append(config_file.user_config[model]["Metric"])
+        
         #Sting to store the comboBox selection
-        self.text = tk.StringVar() 
+        selected_model = tk.StringVar() 
         #COMBOBOX: Select Model to Load
-        self.combo = ttk.Combobox(self.currentWindow, textvariable=self.text)
-        self.combo['values'] = self.my_list
-        self.combo.current(1)
-        self.combo.grid(column=0, row=1)
-        self.combo.place(relx=.02, rely=.24)
+        model_combo = ttk.Combobox(self.currentWindow, textvariable=selected_model)
+        model_combo['values'] = model_list
+        model_combo.current(0)
+        model_combo.place(relx=.02, rely=.24)
         
         #Called when the user makes a selection within the combobox
         def callback(eventObject):
-            self.Close(self.text.get())
-        self.combo.bind("<<ComboboxSelected>>", callback)
+            self.Close(selected_model.get())
+        model_combo.bind("<<ComboboxSelected>>", callback)
 
         ### COMBOBOX for Edit ###
         #Sting to store the comboBox selection
-        self.text2 = tk.StringVar() 
-        self.editCombo = ttk.Combobox(self.currentWindow, textvariable=self.text2)
-        self.editCombo['values'] = allParams
-        self.editCombo.current(1)
-        self.editCombo.grid(column=0, row=1)
-        self.editCombo.place(relx=.2, rely=.24)
+        selected_parameter = tk.StringVar() 
+        editCombo = ttk.Combobox(self.currentWindow, textvariable=selected_parameter)
+        editCombo['values'] = allParams
+        editCombo.current(0)
+        editCombo.grid(column=0, row=1)
+        editCombo.place(relx=.2, rely=.24)
         
         #Called when the user makes a selection within the combobox
         def editCallback(eventObject):
-            self.Edit(self.text.get())
-        self.editCombo.bind("<<ComboboxSelected>>", editCallback)
+            self.Edit(selected_parameter.get())
+        editCombo.bind("<<ComboboxSelected>>", editCallback)
 
-        #LABEL: Parameters
-        self.paramLbl = tk.Label(self.currentWindow, text="Parameters")
-        self.paramLbl.place(relx=.02, rely=.32)
-        self.paramLbl.config(font=("Courier", 12))
-
-		##### Design Parameters #####
-        column = 0
-        row = 0
-        for index in range(len(allParams)):
-            #LABEL: label for the current param
-            floatValue = float(all_param_values[index])
-            floatValue = round(floatValue, 2)
-            self.Lbl = tk.Label(self.currentWindow, text=allParams[index]+": "+str(floatValue))
-            self.Lbl.place(relx=.02+(column*.1), rely=.36+(row*.025))
-            self.Lbl.config(font=("Courier", 9)) 
-            row = row + 1
-            if row == 15:
-                row = 0
-                column = column + 1
+        #Call the function that displays all te parameters
+        self.Display_Parameters(allParams, all_param_values)
         
         #GRAPH        
         fig = Figure(figsize=(6,6))
@@ -186,40 +178,66 @@ class MainPage:
         #plt.savefig(metricName+".png")
         #plt.show()
 
+    #This function is called to display all parameters. 
+    def Display_Parameters(self, allParams, all_param_values):
+        #LABEL: Parameters
+        paramLbl = tk.Label(self.currentWindow, text="Parameters")
+        paramLbl.place(relx=.02, rely=.32)
+        paramLbl.config(font=("Courier", 12))
+
+        ##### Design Parameters #####
+        column = 0
+        row = 0
+        for index in range(len(allParams)):
+            #LABEL: label for the current param
+            floatValue = float(all_param_values[index])
+            floatValue = round(floatValue, 2)
+            Lbl = tk.Label(self.currentWindow, text=allParams[index]+": "+str(floatValue))
+            Lbl.place(relx=.02+(column*.1), rely=.36+(row*.025))
+            Lbl.config(font=("Courier", 9)) 
+            row = row + 1
+            if row == 15:
+                row = 0
+                column = column + 1
+
+    # This function is responsible for creating the smaller window that lets 
+    # you edit parameters
     def Edit(self, selection):
         #Create the current window
-        self.editWindow = tk.Toplevel(root)
-        self.editWindow.title("EditPage")
-        self.editWindow.geometry("600x200+65+500")
+        editWindow = tk.Toplevel(root)
+        editWindow.title("EditPage")
+        editWindow.geometry("600x200+65+500")
         
         #LABEL: Update Slider Label 
-        self.updateLbl = tk.Label(self.editWindow, text="Select a min and max value for the slider.")
-        self.updateLbl.place(relx=.025, rely=.03)
-        self.updateLbl.config(font=("Courier", 10))
+        updateLbl = tk.Label(editWindow, text="Select a min and max value for the slider.")
+        updateLbl.place(relx=.025, rely=.03)
+        updateLbl.config(font=("Courier", 10))
 
          #BUTTON: Update Button
-        self.updateBtn = tk.Button(self.editWindow, text="Update Slider", command=lambda: self.Update(sliderMin, sliderMax), bg="deep sky blue")
-        self.updateBtn.place(relx=.025, rely=.3)
+        updateBtn = tk.Button(editWindow, text="Update Slider", command=lambda: self.Update(sliderMin, sliderMax), bg="deep sky blue")
+        updateBtn.place(relx=.025, rely=.3)
 
         #LABEL: Min Label 
-        self.minLbl = tk.Label(self.editWindow, text="Min:")
-        self.minLbl.place(relx=.025, rely=.15)
-        self.minLbl.config(font=("Courier", 10))
+        minLbl = tk.Label(editWindow, text="Min:")
+        minLbl.place(relx=.025, rely=.15)
+        minLbl.config(font=("Courier", 10))
+
         #Min Textbox
         minText = tk.StringVar()
-        self.minimum = tk.Entry(self.editWindow, textvariable=minText, width=10)
-        self.minimum.insert(0,0)
-        self.minimum.place(relx=0.09, rely=0.15)
+        minimum = tk.Entry(editWindow, textvariable=minText, width=10)
+        minimum.insert(0,0)
+        minimum.place(relx=0.09, rely=0.15)
 
         #LABEL: Max Label 
-        self.maxLbl = tk.Label(self.editWindow, text="Max:")
-        self.maxLbl.place(relx=.25, rely=.15)
-        self.maxLbl.config(font=("Courier", 10))
+        maxLbl = tk.Label(editWindow, text="Max:")
+        maxLbl.place(relx=.25, rely=.15)
+        maxLbl.config(font=("Courier", 10))
+
         #TEXTBOX: Max Textbox
         maxText = tk.StringVar()
-        self.maximum = tk.Entry(self.editWindow, textvariable=maxText, width=10)
-        self.maximum.insert(0,0)
-        self.maximum.place(relx=0.315, rely=0.15)
+        maximum = tk.Entry(editWindow, textvariable=maxText, width=10)
+        maximum.insert(0,0)
+        maximum.place(relx=0.315, rely=0.15)
 
         #LABEL: Current Parameter 
         #self.maxLbl = tk.Label(self.editWindow, text="Current Parameter: "+ selection + ", Current Value = " + value)
@@ -227,14 +245,8 @@ class MainPage:
         #self.maxLbl.config(font=("Courier", 10))
 
         #Slider
-        self.slider = tk.Scale(self.editWindow, from_=0, to=100, orient="horizontal", length=400)
-        self.slider.place(relx=.02, rely=.5)
-
-    def Submit(self, selection, design_buttons):
-        for index in design_buttons:
-            config_file.user_config["config_"+selection][index[0]]= index[1].get()
-        self.currentWindow.destroy()
-        loadModel(selection)
+        slider = tk.Scale(editWindow, from_=0, to=100, orient="horizontal", length=400)
+        slider.place(relx=.02, rely=.5)
 
 	#Called to update the paramaters from the configuration file
     def RedoConfig(self, selection):
@@ -242,10 +254,12 @@ class MainPage:
         get_optimizer_values("config_"+selection)
         self.currentWindow.destroy()
         loadModel(selection)
+
     #Called to close the current window when transitioning to a new window    
     def Close(self, selection):
         self.currentWindow.destroy()
         loadModel(selection)
+
     # Captures the event of a user hitting the red 'X' button to close a window
     def on_closing(self):
         self.currentWindow.destroy
