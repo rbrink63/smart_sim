@@ -86,6 +86,9 @@ class MainPage:
 
     def __init__(self, X_dataPoints, Y_dataPoints, metricName, allParams, all_param_values):
         
+        self.allParams = allParams
+        self.all_param_values = all_param_values
+
         #Create the current window
         self.currentWindow = tk.Toplevel(root)
         self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -145,19 +148,101 @@ class MainPage:
         #Sting to store the comboBox selection
         selected_parameter = tk.StringVar() 
         editCombo = ttk.Combobox(self.currentWindow, textvariable=selected_parameter)
-        editCombo['values'] = allParams
+        editCombo['values'] = self.allParams
         editCombo.current(0)
         editCombo.grid(column=0, row=1)
         editCombo.place(relx=.2, rely=.24)
         
         #Called when the user makes a selection within the combobox
         def editCallback(eventObject):
-            self.Edit(selected_parameter.get())
+            self.Edit(selected_parameter.get(), editCombo.current())
         editCombo.bind("<<ComboboxSelected>>", editCallback)
 
         #Call the function that displays all te parameters
-        self.Display_Parameters(allParams, all_param_values)
+        #self.Display_Parameters(self.allParams, self.all_param_values)
+        self.Display_Parameters()    
+
+        #Call the function that draws the graph
+        self.DrawGraph(X_dataPoints, Y_dataPoints)
+
+    #This function is called to display all parameters. 
+    #def Display_Parameters(self, allParams, all_param_values):
+    def Display_Parameters(self):
+        #LABEL: Parameters
+        paramLbl = tk.Label(self.currentWindow, text="Parameters")
+        paramLbl.place(relx=.02, rely=.32)
+        paramLbl.config(font=("Courier", 12))
+
+        ##### Design Parameters #####
+        column = 0
+        row = 0
+        for index in range(len(self.allParams)):
+            #LABEL: label for the current param
+            floatValue = float(self.all_param_values[index])
+            floatValue = round(floatValue, 2)
+            Lbl = tk.Label(self.currentWindow, text=self.allParams[index]+": "+str(floatValue))
+            Lbl.place(relx=.02+(column*.1), rely=.36+(row*.025))
+            Lbl.config(font=("Courier", 9)) 
+            row = row + 1
+            if row == 15:
+                row = 0
+                column = column + 1
+
+    # This function is responsible for creating the smaller window that lets 
+    # you edit parameters
+    def Edit(self, selection, index):
+        #Create the current window
+        self.editWindow = tk.Toplevel(root)
+        self.editWindow.title("EditPage")
+        self.editWindow.geometry("600x200+65+500")
         
+        #LABEL: Update Slider Label 
+        updateLbl = tk.Label(self.editWindow, text="Select a min and max value for the slider.")
+        updateLbl.place(relx=.025, rely=.03)
+        updateLbl.config(font=("Courier", 10))
+
+         #BUTTON: Update Button
+        updateBtn = tk.Button(self.editWindow, text="Update Slider", command=lambda: UpdateSlider(minText, maxText), bg="deep sky blue")
+        updateBtn.place(relx=.025, rely=.3)
+
+        #LABEL: Min Label 
+        minLbl = tk.Label(self.editWindow, text="Min:")
+        minLbl.place(relx=.025, rely=.15)
+        minLbl.config(font=("Courier", 10))
+
+        #Min Textbox
+        minText = tk.IntVar()
+        minimum = tk.Entry(self.editWindow, textvariable=minText, width=10)
+        minimum.insert(0,0)
+        minimum.place(relx=0.09, rely=0.15)
+
+        #LABEL: Max Label 
+        maxLbl = tk.Label(self.editWindow, text="Max:")
+        maxLbl.place(relx=.25, rely=.15)
+        maxLbl.config(font=("Courier", 10))
+
+        #TEXTBOX: Max Textbox
+        maxText = tk.IntVar()
+        maximum = tk.Entry(self.editWindow, textvariable=maxText, width=10)
+        maximum.insert(0,100)
+        maximum.place(relx=0.315, rely=0.15)
+
+        #LABEL: Current Parameter 
+        maxLbl = tk.Label(self.editWindow, text="Current Parameter: "+ selection + ", Current Value = " + self.all_param_values[index])
+        maxLbl.place(relx=.5, rely=.85, anchor="center")
+        maxLbl.config(font=("Courier", 10))
+
+        #Slider TODO:command=self.updateModel()
+        self.slider = tk.Scale(self.editWindow, from_=0, to=100, orient="horizontal", length=480)
+        self.slider.place(relx=.5, rely=.65, anchor="center")
+        
+        def UpdateSlider(minimun, maximun):
+            self.slider.destroy()
+            self.slider = tk.Scale(self.editWindow, from_=minimun.get(), to=maximum.get(), orient="horizontal", length=480)
+            self.slider.place(relx=.5, rely=.65, anchor="center")
+
+    #This function is responsible for drawing the graph
+    def DrawGraph(self, X_dataPoints, Y_dataPoints):
         #GRAPH        
         fig = Figure(figsize=(6,6))
         plot = fig.add_subplot(111)
@@ -169,84 +254,6 @@ class MainPage:
         canvas = FigureCanvasTkAgg(fig, master=self.currentWindow)
         canvas.get_tk_widget().place(relx=0.43, rely=0.1)
         canvas.draw()
-        #GRAPH
-        #plt.plot(X_dataPoints, Y_dataPoints)
-        #plt.xlabel('X_Axis_Title')
-        #plt.ylabel('Y_Axis_Title')
-        #plt.title("Metric: "+metricName)
-        #plt.grid(True)
-        #plt.savefig(metricName+".png")
-        #plt.show()
-
-    #This function is called to display all parameters. 
-    def Display_Parameters(self, allParams, all_param_values):
-        #LABEL: Parameters
-        paramLbl = tk.Label(self.currentWindow, text="Parameters")
-        paramLbl.place(relx=.02, rely=.32)
-        paramLbl.config(font=("Courier", 12))
-
-        ##### Design Parameters #####
-        column = 0
-        row = 0
-        for index in range(len(allParams)):
-            #LABEL: label for the current param
-            floatValue = float(all_param_values[index])
-            floatValue = round(floatValue, 2)
-            Lbl = tk.Label(self.currentWindow, text=allParams[index]+": "+str(floatValue))
-            Lbl.place(relx=.02+(column*.1), rely=.36+(row*.025))
-            Lbl.config(font=("Courier", 9)) 
-            row = row + 1
-            if row == 15:
-                row = 0
-                column = column + 1
-
-    # This function is responsible for creating the smaller window that lets 
-    # you edit parameters
-    def Edit(self, selection):
-        #Create the current window
-        editWindow = tk.Toplevel(root)
-        editWindow.title("EditPage")
-        editWindow.geometry("600x200+65+500")
-        
-        #LABEL: Update Slider Label 
-        updateLbl = tk.Label(editWindow, text="Select a min and max value for the slider.")
-        updateLbl.place(relx=.025, rely=.03)
-        updateLbl.config(font=("Courier", 10))
-
-         #BUTTON: Update Button
-        updateBtn = tk.Button(editWindow, text="Update Slider", command=lambda: self.Update(sliderMin, sliderMax), bg="deep sky blue")
-        updateBtn.place(relx=.025, rely=.3)
-
-        #LABEL: Min Label 
-        minLbl = tk.Label(editWindow, text="Min:")
-        minLbl.place(relx=.025, rely=.15)
-        minLbl.config(font=("Courier", 10))
-
-        #Min Textbox
-        minText = tk.StringVar()
-        minimum = tk.Entry(editWindow, textvariable=minText, width=10)
-        minimum.insert(0,0)
-        minimum.place(relx=0.09, rely=0.15)
-
-        #LABEL: Max Label 
-        maxLbl = tk.Label(editWindow, text="Max:")
-        maxLbl.place(relx=.25, rely=.15)
-        maxLbl.config(font=("Courier", 10))
-
-        #TEXTBOX: Max Textbox
-        maxText = tk.StringVar()
-        maximum = tk.Entry(editWindow, textvariable=maxText, width=10)
-        maximum.insert(0,0)
-        maximum.place(relx=0.315, rely=0.15)
-
-        #LABEL: Current Parameter 
-        #self.maxLbl = tk.Label(self.editWindow, text="Current Parameter: "+ selection + ", Current Value = " + value)
-        #self.maxLbl.place(relx=.25, rely=.15)
-        #self.maxLbl.config(font=("Courier", 10))
-
-        #Slider
-        slider = tk.Scale(editWindow, from_=0, to=100, orient="horizontal", length=400)
-        slider.place(relx=.02, rely=.5)
 
 	#Called to update the paramaters from the configuration file
     def RedoConfig(self, selection):
