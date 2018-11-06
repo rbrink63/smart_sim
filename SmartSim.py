@@ -186,11 +186,56 @@ class MainPage:
         #plt.savefig(metricName+".png")
         #plt.show()
 
+    def Edit(self, selection):
+        #Create the current window
+        self.editWindow = tk.Toplevel(root)
+        self.editWindow.title("EditPage")
+        self.editWindow.geometry("600x200+65+500")
+        
+        #LABEL: Update Slider Label 
+        self.updateLbl = tk.Label(self.editWindow, text="Select a min and max value for the slider.")
+        self.updateLbl.place(relx=.025, rely=.03)
+        self.updateLbl.config(font=("Courier", 10))
+
+         #BUTTON: Update Button
+        self.updateBtn = tk.Button(self.editWindow, text="Update Slider", command=lambda: self.Update(sliderMin, sliderMax), bg="deep sky blue")
+        self.updateBtn.place(relx=.025, rely=.3)
+
+        #LABEL: Min Label 
+        self.minLbl = tk.Label(self.editWindow, text="Min:")
+        self.minLbl.place(relx=.025, rely=.15)
+        self.minLbl.config(font=("Courier", 10))
+        #Min Textbox
+        minText = tk.StringVar()
+        self.minimum = tk.Entry(self.editWindow, textvariable=minText, width=10)
+        self.minimum.insert(0,0)
+        self.minimum.place(relx=0.09, rely=0.15)
+
+        #LABEL: Max Label 
+        self.maxLbl = tk.Label(self.editWindow, text="Max:")
+        self.maxLbl.place(relx=.25, rely=.15)
+        self.maxLbl.config(font=("Courier", 10))
+        #TEXTBOX: Max Textbox
+        maxText = tk.StringVar()
+        self.maximum = tk.Entry(self.editWindow, textvariable=maxText, width=10)
+        self.maximum.insert(0,0)
+        self.maximum.place(relx=0.315, rely=0.15)
+
+        #LABEL: Current Parameter 
+        #self.maxLbl = tk.Label(self.editWindow, text="Current Parameter: "+ selection + ", Current Value = " + value)
+        #self.maxLbl.place(relx=.25, rely=.15)
+        #self.maxLbl.config(font=("Courier", 10))
+
+        #Slider
+        self.slider = tk.Scale(self.editWindow, from_=0, to=100, orient="horizontal", length=400)
+        self.slider.place(relx=.02, rely=.5)
+
     def Submit(self, selection, design_buttons):
         for index in design_buttons:
             config_file.user_config["config_"+selection][index[0]]= index[1].get()
         self.currentWindow.destroy()
         loadModel(selection)
+
 	#Called to update the paramaters from the configuration file
     def RedoConfig(self, selection):
         get_devsim_values("config_"+selection)
