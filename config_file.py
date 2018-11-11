@@ -1,3 +1,9 @@
+#this is a Python module but it is really used as a database
+#it gets imported in to SmartSim.py when a user launches SmartSim
+#changes to the values during runtime are saved only to the runtime environment
+#so we call config_funcs.update_config_file() as needed to overwite this file
+#to make the changes persistent between SmartSim runs
+
 config_y = {
 	'Metric' : 'y',
 	'Model' : 'm*x + c/b',
