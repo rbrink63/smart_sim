@@ -5,13 +5,6 @@ import os
 
 def get_optimizer_values(metric):
     
-    #run optimizer
-    #the main function will call update file to overwrite config_data.py to store the values
-    
-    #UG is going to write code to dynamically change the func argument for curve fit
-    #this will need to happen before we call do_opt()
-    # for now we will just use y=mx+b as an example
-
     # format arguments and model
     args = config_file.user_config[metric]['x_axis'] + "," + \
             ",".join(config_file.user_config[metric]['optimizer_params'])
@@ -26,12 +19,12 @@ def get_optimizer_values(metric):
     # retrieve optimized constants
     new_opts = scipy_curve_fit.do_optimization(mdl, args, config_file.user_config[metric]['opt_x_data'], config_file.user_config[metric]['opt_y_data'])
    
-    #loop through optimizer params and save new vals
-    #config_file won't actually be updated until main() overwrites it
+    #loop through optimizer params and save new vals in the runtime environment
 
     for idx, param in enumerate(config_file.user_config[metric]['optimizer_params']):
         config_file.user_config[metric][param] = new_opts[idx]
 
+    #update config file
     update_config_file()
 
 def get_devsim_values(metric):
@@ -40,7 +33,6 @@ def get_devsim_values(metric):
         #run devsim
         #fake it for now
         #this updates the local copy of config_data we imported
-        #the main function will overwrite config_data.py to store the values
 
         os.system('ruby /Users/reidwahlbrink/semester/CS_499/devsim/devsim -o output.dso input.dsi')
         #need to parse output.dso
