@@ -1,9 +1,5 @@
 #SmartSim GUI
-'''
-TODO List
-	- parameter lables are going in and out of view when the slider is used
-	- bounds of the graph need to change appropriately
-'''
+
 #Imports
 import matplotlib
 matplotlib.use("TkAgg")
@@ -280,7 +276,7 @@ class MainPage:
         for index in range(len(self.allParams)):
 			#convert the value of the parameter to a float
             floatValue = float(self.all_param_values[index])
-            floatValue = round(floatValue, 2)
+            floatValue = round(floatValue, 6)
             #LABEL: label for the current param
             Lbl = tk.Label(self.currentWindow, text=self.allParams[index]+": "+str(floatValue))
 			#set the location within the window and font size
@@ -347,6 +343,13 @@ class MainPage:
                 self.Display_Parameters(1)
 			    #Redraw the graph
                 self.DrawGraph(1)
+
+			    #destroy the existing slider to avoid a memory leak
+                self.slider.destroy()
+                self.slider = tk.Scale(self.currentWindow, from_=float(self.manualText.get()) - 5.0, to=float(self.manualText.get()) + 5.0, resolution=0.05, digits=4, orient="horizontal", length=450, command=getSliderValue)
+                self.slider.set(float(self.manualText.get()))
+			    #set the location within the window and font size
+                self.slider.place(relx=.21, rely=.92, anchor="center")
             except:
                 self.value.delete(0,10)
                 self.value.insert(0, "Error")
@@ -418,7 +421,8 @@ class MainPage:
             self.DrawGraph(1)
             
 		#SLIDER: slider that allows you to edit any given parameter
-        self.slider = tk.Scale(self.currentWindow, from_=-15.0, to=15.0, orient="horizontal", length=450, digits=4, resolution=0.05, command=getSliderValue)
+        self.slider = tk.Scale(self.currentWindow, from_=float(self.all_param_values[index]) - 5.0, to=float(self.all_param_values[index]) + 5.0, orient="horizontal", length=450, digits=4, resolution=0.05, command=getSliderValue)
+        self.slider.set(float(self.all_param_values[index]))
 		#set the location within the window and font size
         self.slider.place(relx=.21, rely=.92, anchor="center")
         
@@ -472,9 +476,17 @@ class MainPage:
             self.canvas = FigureCanvasTkAgg(fig, master=self.currentWindow)
             self.canvas.get_tk_widget().place(relx=0.43, rely=0.1)
             self.canvas.draw()
-        else: #TODO: lower the axis bounds if needed
-			#remove the existing plot if another one needs to be added. this is the redraw functionality 
+		#remove the existing plot if another one needs to be added. this is the redraw functionality 
+        else:
+            #Update the range of the graph
+            max_X = max(opt_x_data)
+            min_X = min(opt_x_data)
+            max_Y = max(Y_dataPoints)
+            min_Y = min(Y_dataPoints)
             self.plot.lines.pop(0)
+            if ((max_X != min_X) and (max_Y != min_Y)):
+                self.plot.set_xlim([max_X, min_X])
+                self.plot.set_ylim([min_Y, max_Y])
             self.plot.plot(opt_x_data, Y_dataPoints, color='blue')  
             self.canvas.draw()
 
