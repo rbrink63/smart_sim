@@ -338,14 +338,18 @@ class MainPage:
         
 		#This function handles the manual entry of parameter values
         def ManualEntry(eventObject):
-			#set the parameter being edited to the value entered in the textbox
-            self.all_param_values[index] = float(self.manualText.get())
-			#update the configfile
-            config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
-			#update the label associated with this parameter
-            self.Display_Parameters(1)
-			#Redraw the graph
-            self.DrawGraph(1)
+            try:
+			    #set the parameter being edited to the value entered in the textbox
+                self.all_param_values[index] = float(self.manualText.get())
+			    #update the configfile
+                config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
+			    #update the label associated with this parameter
+                self.Display_Parameters(1)
+			    #Redraw the graph
+                self.DrawGraph(1)
+            except:
+                self.value.delete(0,10)
+                self.value.insert(0, "Error")
 		#bind the textbox to the function above so that it is called when the user hits 'return'
         self.value.bind('<Return>', ManualEntry)
         
