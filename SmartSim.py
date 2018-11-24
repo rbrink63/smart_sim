@@ -419,6 +419,9 @@ class MainPage:
             self.Display_Parameters(1)
 			#redraw the graph
             self.DrawGraph(1)
+            #update the manual entry box to display current value
+            self.value.delete(0,10)
+            self.value.insert(0, value)
             
 		#SLIDER: slider that allows you to edit any given parameter
         self.slider = tk.Scale(self.currentWindow, from_=float(self.all_param_values[index]) - 5.0, to=float(self.all_param_values[index]) + 5.0, orient="horizontal", length=450, digits=4, resolution=0.05, command=getSliderValue)
