@@ -1,7 +1,7 @@
 #SmartSim GUI
 
 #Imports
-import importlib
+#import importlib
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
@@ -11,12 +11,12 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox 
 import sys
-#import config_file
-from config_funcs import get_optimizer_values, get_devsim_values
+from config_funcs import get_optimizer_values, get_devsim_values, update_config_file
 
 # Create a root window that will be hidden. Will act as a driver to all other windows.
 root = tk.Tk()
 root.withdraw()
+slider_resolution = 0.01
 
 try:
     # Check to see if application was called with an argument. Argumrnt must represent 
@@ -97,9 +97,6 @@ def loadModel(selection, selection_index):
 
 ### This class represents the main page of the GUI which contains the graph
 class MainPage:
-    #class variable representing the selected model index TODO TODO TODO TODO
-    selected_model_index = 0
-
     def __init__(self, query, metricName, metricIndex, allParams, all_param_values):
 		#copy all parameters into class variables that can be used with 'self' throughout this class
         self.allParams = allParams
@@ -108,6 +105,7 @@ class MainPage:
         self.metricIndex = metricIndex
         self.query = query
         self.labels = []
+        global slider_resolution
         
         #Create the current window
         self.currentWindow = tk.Toplevel(root)
@@ -242,7 +240,7 @@ class MainPage:
             self.labels.append(Lbl) 
 			#location of labels is based around rows and columns
             row = row + 1
-            if row == 15:
+            if row == 18:
                 row = 0
                 column = column + 1
                 
@@ -258,6 +256,7 @@ class MainPage:
     # This function is responsible for creating the smaller window that lets 
     # you edit parameters
     def Edit(self, selection, index, flag):
+        global slider_resolution
         if (flag == 1):
             # If this is not the first time the function is called than widgets already exist.
             # Delete them.
@@ -272,9 +271,7 @@ class MainPage:
             self.resolution.destroy()
             self.slider.destroy()
 
-        # Called to update the label below the slider representing the parameter currently 
-        # being edited. kinda overkill TODO: maybe change this so all parameter labels are 
-        # not re-written when only one needs to change
+        #Update the labels
         self.Display_Parameters(1)
         #LABEL: Manual Label 
         self.manualLbl = tk.Label(self.currentWindow, text="Enter Value:")
@@ -290,25 +287,39 @@ class MainPage:
         
 		#This function handles the manual entry of parameter values
         def ManualEntry(eventObject):
-            try:
-			    #set the parameter being edited to the value entered in the textbox
-                self.all_param_values[index] = float(self.manualText.get())
-			    #update the configfile
-                config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
-			    #update the label associated with this parameter
-                self.Display_Parameters(1)
-			    #Redraw the graph
-                self.DrawGraph(1)
+            global slider_resolution
+            #try:
+		    #set the parameter being edited to the value entered in the textbox
+            self.all_param_values[index] = float(self.manualText.get())
+            splitText = self.manualText.get().split(".")
+            slider_resolution = 10**(-1*len(splitText[1]))
+	        #update the configfile
+            config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
+			#update the label associated with this parameter
+            self.Display_Parameters(1)
+			#Redraw the graph
+            self.DrawGraph(1)
 
-			    #destroy the existing slider to avoid a memory leak
-                self.slider.destroy()
-                self.slider = tk.Scale(self.currentWindow, from_=float(self.manualText.get()) - 5.0, to=float(self.manualText.get()) + 5.0, resolution=0.05, digits=4, orient="horizontal", length=450, command=getSliderValue)
-                self.slider.set(float(self.manualText.get()))
-			    #set the location within the window and font size
-                self.slider.place(relx=.21, rely=.92, anchor="center")
-            except:
-                self.value.delete(0,10)
-                self.value.insert(0, "Error")
+			#destroy the existing slider to avoid a memory leak
+            self.slider.destroy()
+            self.slider = tk.Scale(self.currentWindow, from_=float(self.manualText.get()) - 5.0, to=float(self.manualText.get()) + 5.0, resolution=slider_resolution, digits=6, orient="horizontal", length=450, command=getSliderValue)
+            self.slider.set(float(self.manualText.get()))
+			#set the location within the window and font size
+            self.slider.place(relx=.21, rely=.92, anchor="center")
+                
+            #Update the min, max and res labels of the slider 
+            self.minimum.delete(0, 20)
+            self.minimum.insert(0,float(self.all_param_values[index]) - 5.0)
+            self.maximum.delete(0, 20)
+            self.maximum.insert(0,float(self.all_param_values[index]) + 5.0)
+            self.resolution.delete(0,20)
+            self.resolution.insert(0,float(slider_resolution))
+
+            #update config file
+            update_config_file()
+            #except:
+            #self.value.delete(0,10)
+            #self.value.insert(0, "Error")
 		#bind the textbox to the function above so that it is called when the user hits 'return'
         self.value.bind('<Return>', ManualEntry)
         
@@ -329,7 +340,7 @@ class MainPage:
 		#delete the default 0 added to the textbox
         self.minimum.delete(0, 1)
 		#set the default value to be displayed
-        self.minimum.insert(0,-15.0)
+        self.minimum.insert(0,float(self.all_param_values[index]) - 5.0)
 		#set the location within the window and font size
         self.minimum.place(relx=0.05, rely=0.86)
 
@@ -345,7 +356,7 @@ class MainPage:
 		#delete the default o added to the textbox 
         self.maximum.delete(0, 1)
 		#set the default value to be displayed
-        self.maximum.insert(0,15.0)
+        self.maximum.insert(0,float(self.all_param_values[index]) + 5.0)
 		#set the location within the window and font size
         self.maximum.place(relx=0.1575, rely=0.86)
         
@@ -359,9 +370,9 @@ class MainPage:
         self.resText = tk.StringVar()
         self.resolution = tk.Entry(self.currentWindow, textvariable=self.resText, width=8)
 		#delete the default 0 added to the textbox
-        self.resolution.delete(0,1)
+        self.resolution.delete(0,20)
 		#set the default value to be displayed
-        self.resolution.insert(0,0.05)
+        self.resolution.insert(0,float(slider_resolution))
 		#set the location within the window and font size
         self.resolution.place(relx=0.32, rely=0.86)
 
@@ -378,21 +389,27 @@ class MainPage:
             #update the manual entry box to display current value
             self.value.delete(0,10)
             self.value.insert(0, value)
+            #update config file
+            update_config_file()
             
 		#SLIDER: slider that allows you to edit any given parameter
-        self.slider = tk.Scale(self.currentWindow, from_=float(self.all_param_values[index]) - 5.0, to=float(self.all_param_values[index]) + 5.0, orient="horizontal", length=450, digits=4, resolution=0.05, command=getSliderValue)
+        self.slider = tk.Scale(self.currentWindow, from_=float(self.all_param_values[index]) - 5.0, to=float(self.all_param_values[index]) + 5.0, orient="horizontal", length=450, digits=6, resolution=slider_resolution, command=getSliderValue)
         self.slider.set(float(self.all_param_values[index]))
 		#set the location within the window and font size
         self.slider.place(relx=.21, rely=.92, anchor="center")
         
 		#update the slider with the users prefrence for min, max and resolution
         def UpdateSlider(minimun, maximun, resolution):
+            global slider_resolution
+            slider_resolution = float(resolution.get())
 			#destroy the existing slider to avoid a memory leak
             self.slider.destroy()
-            self.slider = tk.Scale(self.currentWindow, from_=float(minimun.get()), to=float(maximun.get()), resolution=float(resolution.get()), digits=4, orient="horizontal", length=450, command=getSliderValue)
-			#set the location within the window and font size
-            self.slider.place(relx=.21, rely=.92, anchor="center")
-            
+            try:
+                self.slider = tk.Scale(self.currentWindow, from_=float(minimun.get()), to=float(maximun.get()), resolution=slider_resolution, digits=6, orient="horizontal", length=450, command=getSliderValue)
+			    #set the location within the window and font size
+                self.slider.place(relx=.21, rely=.92, anchor="center")
+            except: 
+                print("Invalid entry for either the min, max or resolution of the slider. Please enter an appropriate value")
 
     #This function is responsible for drawing the graph
     def DrawGraph(self, flag):
@@ -427,7 +444,7 @@ class MainPage:
 			#plot the x and y data points from each list
             self.plot.plot(opt_x_data, Y_dataPoints, color='blue')
 			#set the title of the plot
-            self.plot.set_title (self.query["Metric"], fontsize=14)
+            self.plot.set_title ("Current Metric: "+self.query["Metric"], fontsize=14)
 			#set the y axis title of the plot
             self.plot.set_ylabel("Y", fontsize=14)
 			#add a grid to the plot
@@ -461,7 +478,7 @@ class MainPage:
 		#destroy the current window 
         self.currentWindow.destroy()
 		#load the new model
-        loadModel(selection)
+        loadModel(selection, self.metricIndex)
 
     #Called to close the current window when transitioning to a new window    
     def Close(self, selection):
