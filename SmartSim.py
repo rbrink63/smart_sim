@@ -1,6 +1,7 @@
 #SmartSim GUI
 
 #Imports
+import importlib
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
@@ -9,86 +10,31 @@ from matplotlib.figure import Figure
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox 
-import config_file
+import sys
+#import config_file
 from config_funcs import get_optimizer_values, get_devsim_values
 
 # Create a root window that will be hidden. Will act as a driver to all other windows.
 root = tk.Tk()
 root.withdraw()
 
-# This class represents the introduction page that first appears when the application is launched
-class IntroPage:
-    def __init__(self):
-        #Create the current window
-        self.currentWindow = tk.Toplevel(root)
-		#Close the window if the user hits the "x" button on the GUI
-        self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.currentWindow.title("IntroPage")
-		#Set the size and location of the window
-        self.currentWindow.geometry("500x300+400+0")
-
-        #LABEL: SmartSim title 
-        title = tk.Label(self.currentWindow, text="SmartSim")
-		#set the location and font size of the title
-        title.place(relx=.5, rely=.07, anchor="center")
-        title.config(font=("Courier", 24))
-
-        #LABEL: Welcome message
-        welcomeLbl = tk.Label(self.currentWindow, text="Welcome to the SmartSim development tool.")
-		#set the location within the window and font size
-        welcomeLbl.place(relx=.5, rely=.2, anchor="center")
-        welcomeLbl.config(font=("Courier", 14))
-
-        #LABEL: Select metric
-        metricLbl = tk.Label(self.currentWindow, text="Select Metric")
-		#Set the location within the window and font size
-        metricLbl.place(relx=.5, rely=.35, anchor="center")
-        metricLbl.config(font=("Courier", 12))
-
-        #Create a List that will be used to fill the comboBox
-        model_list = []
-        for metric in config_file.user_config:
-            model_list.append(config_file.user_config[metric]["Metric"])
-
-        #COMBOBOX: Select Model to Load
-        selected_model = tk.StringVar() 
-        model_combo = ttk.Combobox(self.currentWindow, textvariable=selected_model)
-		#Add the list created earlier to the combobox
-        model_combo['values'] = model_list
-		#Set the default value to be displayed by the box as the first index of the list
-        model_combo.current(0)
-		#Set the location within the window 
-        model_combo.place(relx=.5, rely=.45, anchor="center")
-        
-        #Called when the user makes a selection within the combobox
-        def callback(eventObject):
-            self.Open(selected_model.get())
-        # This binds the event that occurs when a user makes a selection 
-        # within the combobox to the callback function above.
-        model_combo.bind("<<ComboboxSelected>>", callback)
-    
-    #Called to close the IntroPage when transitioning to a new page
-    def close(self):
-        self.currentWindow.destroy()
-
-    #Initiates opening the main page which contains the plot
-    def Open(self, selection):
-		#call the function that will close the current window
-        self.close()
-		#load the model that will be displayed
-        loadModel(selection)
-
-    # Captures the event of a user hitting the red 'X' button to close a window
-    def on_closing(self):
-		#close the curret window
-        self.currentWindow.destroy
-        if messagebox.askokcancel("Quit", "Do you want to quit?"):
-            #The following line will kill the entire application
-            root.destroy()     
-###### End of the IntroPage Class ######
+try:
+    # Check to see if application was called with an argument. Argumrnt must represent 
+    # a config file
+    command = sys.argv[1]  
+except:
+    #if argument not given set default config file
+    command = "config_file"
+try:
+    #Attempt to import the given config file
+    config_file = __import__(command)
+except:
+    #If given config file could not be loaded report an error and close application
+    print("Could not import "+command)
+    sys.exit()
 
 # This function is called to load model data that will be used to create a new plot
-def loadModel(selection):
+def loadModel(selection, selection_index):
     #Get the name of the selected model
     selected_model = "config_"+selection
 	#create a list to hold the value of every parameter in the model to be loaded
@@ -146,16 +92,20 @@ def loadModel(selection):
         modelEq = modelEq.replace(index, str(query[index]))
         
     #Call the MainPage 
-    MainPage(query, selection, allParams, all_param_values)
+    MainPage(query, selection, selection_index, allParams, all_param_values)
 ###### END OF LOADMODEL CLASS ######
 
 ### This class represents the main page of the GUI which contains the graph
 class MainPage:
-    def __init__(self, query, metricName, allParams, all_param_values):
+    #class variable representing the selected model index TODO TODO TODO TODO
+    selected_model_index = 0
+
+    def __init__(self, query, metricName, metricIndex, allParams, all_param_values):
 		#copy all parameters into class variables that can be used with 'self' throughout this class
         self.allParams = allParams
         self.all_param_values = all_param_values
         self.metricName = metricName
+        self.metricIndex = metricIndex
         self.query = query
         self.labels = []
         
@@ -219,19 +169,25 @@ class MainPage:
         #Sting to store the comboBox selection
         selected_model = tk.StringVar() 
         #COMBOBOX: Select Model to Load
-        model_combo = ttk.Combobox(self.currentWindow, textvariable=selected_model)
+        self.model_combo = ttk.Combobox(self.currentWindow, textvariable=selected_model)
 		#add the list to the combobox 
-        model_combo['values'] = model_list
+        self.model_combo['values'] = model_list
 		#set the default value to be displayed to the first index of the list
-        model_combo.current(0)
+        self.model_combo.current(self.metricIndex)
 		#set the location within the window and font size
-        model_combo.place(relx=.02, rely=.24)
+        self.model_combo.place(relx=.02, rely=.24)
         
         #Called when the user makes a selection within the combobox
         def callback(eventObject):
+            loop_counter = 0
+            for model in model_list:
+                if (selected_model.get() == model):
+                    self.metricIndex = loop_counter
+                    break
+                loop_counter = loop_counter + 1
             self.Close(selected_model.get())
 		#binds the combobox to the callback function so that it is called when the user makes a selection
-        model_combo.bind("<<ComboboxSelected>>", callback)
+        self.model_combo.bind("<<ComboboxSelected>>", callback)
 
         ### COMBOBOX for Edit ###
         #Sting to store the comboBox selection
@@ -458,7 +414,10 @@ class MainPage:
         for dataPoint in opt_x_data:
             currentEq = modelEq.replace(x_axis, str(dataPoint))
 			#append each point to the list of y data points
-            Y_dataPoints.append(eval(currentEq))
+            try:
+                Y_dataPoints.append(eval(currentEq))
+            except:
+                print("attempted to divide by zero. Value ignored")
             
         if (flag == 0):
             #INIT Graph: set the size of the graph window 
@@ -468,7 +427,7 @@ class MainPage:
 			#plot the x and y data points from each list
             self.plot.plot(opt_x_data, Y_dataPoints, color='blue')
 			#set the title of the plot
-            self.plot.set_title ("Estimation Grid", fontsize=14)
+            self.plot.set_title (self.query["Metric"], fontsize=14)
 			#set the y axis title of the plot
             self.plot.set_ylabel("Y", fontsize=14)
 			#add a grid to the plot
@@ -509,7 +468,7 @@ class MainPage:
 		#close the current window
         self.currentWindow.destroy()
 		#load the new model
-        loadModel(selection)
+        loadModel(selection, self.metricIndex)
 
     # Captures the event of a user hitting the red 'X' button to close a window
     def on_closing(self):
@@ -520,7 +479,12 @@ class MainPage:
             root.destroy()
 
 def main():
-    app = IntroPage()
+    # This is a little nasty, but I had to use a for loop to get the first metric of 
+    # the config file. Not sure how else to do it as it will not accept an integer and 
+    # I am not sure what models the file may contain. 
+    for metric in config_file.user_config:
+        loadModel(config_file.user_config[metric]["Metric"], 0)
+        break
     root.mainloop()
 
 if __name__ == '__main__':
