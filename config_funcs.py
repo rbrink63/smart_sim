@@ -1,3 +1,4 @@
+import subprocess
 import config_file
 import scipy_curve_fit
 import sys
@@ -29,14 +30,34 @@ def get_optimizer_values(metric):
 
 def get_devsim_values(metric):
 #find all devsim commands in the metric entry of the config file
+    
+             
     for param in config_file.user_config[metric]['devsim_params']:
-        #run devsim
-        #fake it for now
-        #this updates the local copy of config_data we imported
+        #need to create input file 
+        with open('smart_sim_input.dsi', 'w') as f:
+            f.seek(0) #go to beginning of file 
+            f.write('Devsim Input File\n')
+            f.write(config_file.user_config[metric]['models_path'] + '\n')
+            f.write(config_file.user_config[metric]['corners'] + '\n')
+            f.write(config_file.user_config[metric]['secondary_corners'] + '\n')
+            f.write(",".join(config_file.user_config[metric]['headers'])[:-1] + '\n')
 
-        os.system('ruby /Users/reidwahlbrink/semester/CS_499/devsim/devsim -o output.dso input.dsi')
+            for idx, val in enumerate(config_file.user_config[metric]['headers']):
+                    if (val in config_file.user_config[metric]['design_params'] or val in config_file.user_config[metric]['devsim_params'] or val in config_file.user_config[metric]['optimizer_params']):
+                        f.write(str(config_file.user_config[metric][val]) + ',')
+                    else:
+                        f.write(config_file.user_config[metric][param][0][idx] + ',')
+        
+        #run devsim
+        devsim_path = "/data/home/rcwahl2/devsim/devsim"
+        
+        os.system(f"{devsim_path} -bsub \"\" -v 1 -o output.dso smart_sim_input.dsi")
+        
         #need to parse output.dso
-        config_file.user_config[metric][param][1] = 11 
+        result = subprocess.check_output("cat output.dso | grep -A1 SIM | tail -n -1 | awk '{print $2}'", shell=True) 
+        #subprocess.check_output return value needs to be post-processed
+        result = float(result.decode('ascii')[slice(0,-2)]) #get rid of leading b, trailing ,\n and convert to float
+        config_file.user_config[metric][param][1] = result
 
 
     update_config_file()
