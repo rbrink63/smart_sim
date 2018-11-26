@@ -1,6 +1,7 @@
 import sys
 import csv
 import numpy as np
+from math import *
 from scipy.optimize import curve_fit
 
 def do_optimization(model, args, x_data, y_data):

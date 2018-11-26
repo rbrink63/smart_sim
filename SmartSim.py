@@ -11,6 +11,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox 
 import sys
+from sympy import solve, Symbol
 from config_funcs import get_optimizer_values, get_devsim_values, update_config_file
 
 # Create a root window that will be hidden. Will act as a driver to all other windows.
@@ -212,6 +213,8 @@ class MainPage:
 		#update the parameter values of all labels
         self.Edit(allParams[0], 0, 0)
 
+        self.Solve()
+        
     #This function is called to display all parameters. 
     #def Display_Parameters(self, allParams, all_param_values):
     def Display_Parameters(self, flag):
@@ -427,7 +430,9 @@ class MainPage:
             modelEq = modelEq.replace(index, str(self.all_param_values[counter]))
             counter = counter + 1
         # after all parameter variables have been replaced with their actual values evaluate the equation 
-		# at different values of x to generate the y data points for the graph
+        
+        self.eqn = modelEq
+        # at different values of x to generate the y data points for the graph
         for dataPoint in opt_x_data:
             currentEq = modelEq.replace(x_axis, str(dataPoint))
 			#append each point to the list of y data points
@@ -479,6 +484,28 @@ class MainPage:
         self.currentWindow.destroy()
 		#load the new model
         loadModel(selection, self.metricIndex)
+
+    #Solve for the goal value
+    def Solve(self):
+        modelEq = self.query["Model"]
+        # goal_val and target_var needs to be selected by user
+        # For now, goal_val is hard coded, and target_var is whatever the x-axis is
+        goal_val = 11.1 
+        target_var = self.query["x_axis"] # need user to select which param to solve for 
+        tv = Symbol(target_var)
+
+        # get current equation
+        modelEq = self.eqn # this needs to be changed later so that it can handle other vars
+        modelEq = modelEq.replace(target_var, "tv")
+
+        if goal_val < 0:
+            modelEq += str(goal_val)
+        else:
+            modelEq += "-" + str(goal_val)
+        func = eval(modelEq)
+        print("Solve result:", solve(func))
+        
+         
 
     #Called to close the current window when transitioning to a new window    
     def Close(self, selection):
