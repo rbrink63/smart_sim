@@ -212,8 +212,6 @@ class MainPage:
         self.DrawGraph(0)
 		#update the parameter values of all labels
         self.Edit(allParams[0], 0, 0)
-
-        self.Solve()
         
     #This function is called to display all parameters. 
     #def Display_Parameters(self, allParams, all_param_values):
@@ -243,7 +241,7 @@ class MainPage:
             self.labels.append(Lbl) 
 			#location of labels is based around rows and columns
             row = row + 1
-            if row == 18:
+            if row == 15:
                 row = 0
                 column = column + 1
                 
@@ -276,8 +274,34 @@ class MainPage:
 
         #Update the labels
         self.Display_Parameters(1)
+		
+		#TODO: implement the twist
+		#LABEL: Set Goal Label
+        self.goalLbl = tk.Label(self.currentWindow, text="Enter Target Value:")
+		#set the location within the window and font size
+        self.goalLbl.place(relx=.0175, rely=.77)
+        self.goalLbl.config(font=("Courier", 10))
+	
+		#ENTRY: Goal Entry Box
+        self.goalText = tk.StringVar()
+        self.goal = tk.Entry(self.currentWindow, textvariable=self.goalText, width=8)
+		#set the location within the window and font size
+        self.goal.place(relx=0.16, rely=.768)
+
+        #LABEL: X Label 
+        self.XLbl = tk.Label(self.currentWindow, text="for X =")
+		#set the location within the window and font size
+        self.XLbl.place(relx=.225, rely=.77)
+        self.XLbl.config(font=("Courier", 10))
+
+		#ENTRY: X Entry Label
+        self.XText = tk.StringVar()
+        self.X = tk.Entry(self.currentWindow, textvariable=self.XText, width=8)
+		#set the location within the window and font size
+        self.X.place(relx=0.28, rely=.768)
+
         #LABEL: Manual Label 
-        self.manualLbl = tk.Label(self.currentWindow, text="Enter Value:")
+        self.manualLbl = tk.Label(self.currentWindow, text="Set Value:")
 		#set the location within the window and font size
         self.manualLbl.place(relx=.0175, rely=.825)
         self.manualLbl.config(font=("Courier", 10))
@@ -286,7 +310,7 @@ class MainPage:
         self.manualText = tk.StringVar()
         self.value = tk.Entry(self.currentWindow, textvariable=self.manualText, width=8)
 		#set the location within the window and font size
-        self.value.place(relx=0.11, rely=.823)
+        self.value.place(relx=0.095, rely=.823)
         
 		#This function handles the manual entry of parameter values
         def ManualEntry(eventObject):
@@ -329,7 +353,12 @@ class MainPage:
         #BUTTON: Update Button
         self.updateBtn = tk.Button(self.currentWindow, text="Update Slider", command=lambda: UpdateSlider(self.minText, self.maxText, self.resText), bg="deep sky blue", height=1, width=11, font=("Courier", 10))
 		#set the location within the window and font size
-        self.updateBtn.place(relx=.245, rely=.81)
+        self.updateBtn.place(relx=.18, rely=.81)
+
+        #BUTTON: Goal Button
+        self.goalBtn = tk.Button(self.currentWindow, text="Goal Calc", command=lambda: self.Solve(float(self.goalText.get()), float(self.XText.get())), bg="deep sky blue", height=1, width=7, font=("Courier", 10))
+		#set the location within the window and font size
+        self.goalBtn.place(relx=.3, rely=.81)
 
         #LABEL: Min Label 
         self.minLbl = tk.Label(self.currentWindow, text="Min:")
@@ -486,7 +515,7 @@ class MainPage:
         loadModel(selection, self.metricIndex)
 
     #Solve for the goal value
-    def Solve(self):
+    def Solve(self, goal_val, x_val):
         modelEq = self.query["Model"]
         # goal_val and target_var needs to be selected by user
         # For now, goal_val is hard coded, and target_var is whatever the x-axis is
