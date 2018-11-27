@@ -581,7 +581,12 @@ def main():
     for metric in config_file.user_config:
         loadModel(config_file.user_config[metric]["Metric"], 0)
         break
-    root.mainloop()
+    while True:
+        try:
+            root.mainloop()
+            break
+        except UnicodeDecodeError:
+            pass
 
 if __name__ == '__main__':
     main()
