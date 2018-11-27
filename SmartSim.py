@@ -154,7 +154,7 @@ class MainPage:
         #LABEL: Parameters
         paramLbl = tk.Label(self.currentWindow, text="Parameters")
 		#set the location within the window and font size
-        paramLbl.place(relx=.02, rely=.32)
+        paramLbl.place(relx=.02, rely=.29)
         paramLbl.config(font=("Courier", 12))
         
         #Create a List that will be used to populate the combobox
@@ -235,13 +235,13 @@ class MainPage:
             #LABEL: label for the current param
             Lbl = tk.Label(self.currentWindow, text=self.allParams[index]+": "+str(floatValue))
 			#set the location within the window and font size
-            Lbl.place(relx=.02+(column*.1), rely=.36+(row*.025))
+            Lbl.place(relx=.02+(column*.1), rely=.32+(row*.025))
             Lbl.config(font=("Courier", 9))
 			#add the label to the list of all labels for parameters
             self.labels.append(Lbl) 
 			#location of labels is based around rows and columns
             row = row + 1
-            if row == 15:
+            if row == 17:
                 row = 0
                 column = column + 1
                 
@@ -315,38 +315,38 @@ class MainPage:
 		#This function handles the manual entry of parameter values
         def ManualEntry(eventObject):
             global slider_resolution
-            #try:
-		    #set the parameter being edited to the value entered in the textbox
-            self.all_param_values[index] = float(self.manualText.get())
-            splitText = self.manualText.get().split(".")
-            slider_resolution = 10**(-1*len(splitText[1]))
-	        #update the configfile
-            config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
-			#update the label associated with this parameter
-            self.Display_Parameters(1)
-			#Redraw the graph
-            self.DrawGraph(1)
+            try:
+		        #set the parameter being edited to the value entered in the textbox
+                self.all_param_values[index] = float(self.manualText.get())
+                splitText = self.manualText.get().split(".")
+                slider_resolution = 10**(-1*len(splitText[1]))
+	            #update the configfile
+                config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
+			    #update the label associated with this parameter
+                self.Display_Parameters(1)
+			    #Redraw the graph
+                self.DrawGraph(1)
 
-			#destroy the existing slider to avoid a memory leak
-            self.slider.destroy()
-            self.slider = tk.Scale(self.currentWindow, from_=float(self.manualText.get()) - 5.0, to=float(self.manualText.get()) + 5.0, resolution=slider_resolution, digits=6, orient="horizontal", length=450, command=getSliderValue)
-            self.slider.set(float(self.manualText.get()))
-			#set the location within the window and font size
-            self.slider.place(relx=.21, rely=.92, anchor="center")
-                
-            #Update the min, max and res labels of the slider 
-            self.minimum.delete(0, 20)
-            self.minimum.insert(0,float(self.all_param_values[index]) - 5.0)
-            self.maximum.delete(0, 20)
-            self.maximum.insert(0,float(self.all_param_values[index]) + 5.0)
-            self.resolution.delete(0,20)
-            self.resolution.insert(0,float(slider_resolution))
+			    #destroy the existing slider to avoid a memory leak
+                self.slider.destroy()
+                self.slider = tk.Scale(self.currentWindow, from_=float(self.manualText.get()) - 5.0, to=float(self.manualText.get()) + 5.0, resolution=slider_resolution, digits=6, orient="horizontal", length=450, command=getSliderValue)
+                self.slider.set(float(self.manualText.get()))
+			    #set the location within the window and font size
+                self.slider.place(relx=.21, rely=.92, anchor="center")
+                    
+                #Update the min, max and res labels of the slider 
+                self.minimum.delete(0, 20)
+                self.minimum.insert(0,float(self.all_param_values[index]) - 5.0)
+                self.maximum.delete(0, 20)
+                self.maximum.insert(0,float(self.all_param_values[index]) + 5.0)
+                self.resolution.delete(0,20)
+                self.resolution.insert(0,float(slider_resolution))
 
-            #update config file
-            update_config_file()
-            #except:
-            #self.value.delete(0,10)
-            #self.value.insert(0, "Error")
+                #update config file
+                update_config_file()
+            except:
+                self.value.delete(0,10)
+                self.value.insert(0, "Error")
 		#bind the textbox to the function above so that it is called when the user hits 'return'
         self.value.bind('<Return>', ManualEntry)
         
@@ -356,7 +356,7 @@ class MainPage:
         self.updateBtn.place(relx=.18, rely=.81)
 
         #BUTTON: Goal Button
-        self.goalBtn = tk.Button(self.currentWindow, text="Goal Calc", command=lambda: self.Solve(float(self.goalText.get()), float(self.XText.get())), bg="deep sky blue", height=1, width=7, font=("Courier", 10))
+        self.goalBtn = tk.Button(self.currentWindow, text="Goal Calc", command=lambda: self.Solve(self.goalText, self.XText), bg="deep sky blue", height=1, width=7, font=("Courier", 10))
 		#set the location within the window and font size
         self.goalBtn.place(relx=.3, rely=.81)
 
@@ -498,7 +498,7 @@ class MainPage:
             min_Y = min(Y_dataPoints)
             self.plot.lines.pop(0)
             if ((max_X != min_X) and (max_Y != min_Y)):
-                self.plot.set_xlim([max_X, min_X])
+                self.plot.set_xlim([min_X, max_X])
                 self.plot.set_ylim([min_Y, max_Y])
             self.plot.plot(opt_x_data, Y_dataPoints, color='blue')  
             self.canvas.draw()
@@ -515,7 +515,16 @@ class MainPage:
         loadModel(selection, self.metricIndex)
 
     #Solve for the goal value
-    def Solve(self, goal_val, x_val):
+    def Solve(self, goal, x):
+        try:
+            goal_val = float(goal.get())
+            x_val = float(x.get())
+        except:
+            self.goal.delete(0, 20)
+            self.goal.insert(0, "Error")
+            self.X.delete(0, 20)
+            self.X.insert(0, "Error")
+            return
         modelEq = self.query["Model"]
         # goal_val and target_var needs to be selected by user
         # For now, goal_val is hard coded, and target_var is whatever the x-axis is
