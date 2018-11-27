@@ -540,7 +540,7 @@ class MainPage:
         print("self.all_params:", self.allParams)
 
         modelEq = modelEq.replace(target_var, "tv")
-        modelEq = modelEq.replace(currX_label, x_val)
+        modelEq = modelEq.replace(currX_label, str(x_val))
 
         #replace all parameters in the model equation with their actual values
         for idx, param in enumerate(self.allParams):
