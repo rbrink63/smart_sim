@@ -173,6 +173,7 @@ class MainPage:
         self.model_combo['values'] = model_list
 		#set the default value to be displayed to the first index of the list
         self.model_combo.current(self.metricIndex)
+
 		#set the location within the window and font size
         self.model_combo.place(relx=.02, rely=.24)
         
@@ -198,12 +199,14 @@ class MainPage:
         self.editCombo.current(0)
 		#set the location within the window and font size
         self.editCombo.place(relx=.2, rely=.24)
-        
+                #set the current parameter
+        self.currParam = selected_parameter.get()
         #Called when the user makes a selection within the combobox
         def editCallback(eventObject):
             self.Edit(selected_parameter.get(), self.editCombo.current(), 1)
+            self.currParam = selected_parameter.get()
         self.editCombo.bind("<<ComboboxSelected>>", editCallback)
-
+        
         #Call the function that displays all te parameters
         #self.Display_Parameters(self.allParams, self.all_param_values)
         self.Display_Parameters(0)    
@@ -356,7 +359,7 @@ class MainPage:
         self.updateBtn.place(relx=.18, rely=.81)
 
         #BUTTON: Goal Button
-        self.goalBtn = tk.Button(self.currentWindow, text="Goal Calc", command=lambda: self.Solve(float(self.goalText.get()), float(self.XText.get())), bg="deep sky blue", height=1, width=7, font=("Courier", 10))
+        self.goalBtn = tk.Button(self.currentWindow, text="Goal Calc", command=lambda: self.Solve(float(self.goalText.get()), self.XText.get()), bg="deep sky blue", height=1, width=7, font=("Courier", 10))
 		#set the location within the window and font size
         self.goalBtn.place(relx=.3, rely=.81)
 
@@ -414,7 +417,8 @@ class MainPage:
             self.all_param_values[index] = float(value)
 			#update the config file
             config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
-			#reload the label associated with this parameter
+            
+            #reload the label associated with this parameter
             self.Display_Parameters(1)
 			#redraw the graph
             self.DrawGraph(1)
@@ -445,7 +449,9 @@ class MainPage:
 
     #This function is responsible for drawing the graph
     def DrawGraph(self, flag):
+
 		#get the equation for the model
+        selected_parameter = tk.StringVar() 
         modelEq = self.query["Model"]
         #retrieve the x values from the config file
         opt_x_data = self.query["opt_x_data"]
@@ -453,7 +459,6 @@ class MainPage:
 		#create a list to hold the generated y values
         Y_dataPoints = []
         counter = 0
-		
 		#replace all parameters in the model equation with their actual values
         for index in self.allParams:
             modelEq = modelEq.replace(index, str(self.all_param_values[counter]))
@@ -516,25 +521,34 @@ class MainPage:
 
     #Solve for the goal value
     def Solve(self, goal_val, x_val):
-        modelEq = self.query["Model"]
-        # goal_val and target_var needs to be selected by user
-        # For now, goal_val is hard coded, and target_var is whatever the x-axis is
-        goal_val = 11.1 
-        target_var = self.query["x_axis"] # need user to select which param to solve for 
+        #current model
+        modelEq = self.query["Model"] 
+        currX_label = self.query["x_axis"]
+        #target parameter to be solved
+        target_var = self.currParam               
         tv = Symbol(target_var)
+        print("self.all_param_values:",self.all_param_values)
+        print("self.all_params:", self.allParams)
 
-        # get current equation
-        modelEq = self.eqn # this needs to be changed later so that it can handle other vars
         modelEq = modelEq.replace(target_var, "tv")
+        modelEq = modelEq.replace(currX_label, x_val)
+
+        #replace all parameters in the model equation with their actual values
+        for idx, param in enumerate(self.allParams):
+            if param != "tv":
+                    modelEq = modelEq.replace(param, str(self.all_param_values[idx]))
+        
+        print("modelEq:", modelEq)
 
         if goal_val < 0:
             modelEq += str(goal_val)
         else:
             modelEq += "-" + str(goal_val)
         func = eval(modelEq)
-        print("Solve result:", solve(func))
+        res = solve(func)
+        print("Solve result:", res)
         
-         
+        return res
 
     #Called to close the current window when transitioning to a new window    
     def Close(self, selection):
