@@ -130,7 +130,7 @@ class MainPage:
         otherLbl.config(font=("Courier", 12))
 
         #BUTTON: Overlay Button
-        overlayBtn = tk.Button(self.currentWindow, text="Overlay Simulated Data", bg="deep sky blue")
+        overlayBtn = tk.Button(self.currentWindow, text="Overlay Simulated Data", bg="deep sky blue", command=lambda: self.DrawGraph(2))
 		#set the location within the window and font size
         overlayBtn.place(relx=.02, rely=.14)
 
@@ -359,7 +359,7 @@ class MainPage:
         self.updateBtn.place(relx=.18, rely=.81)
 
         #BUTTON: Goal Button
-        self.goalBtn = tk.Button(self.currentWindow, text="Goal Calc", command=lambda: self.Solve(self.goalText, self.XText), bg="deep sky blue", height=1, width=7, font=("Courier", 10))
+        self.goalBtn = tk.Button(self.currentWindow, text="Goal Calc", command=lambda: self.Solve(self.goalText, self.XText, index), bg="deep sky blue", height=1, width=7, font=("Courier", 10))
 		#set the location within the window and font size
         self.goalBtn.place(relx=.3, rely=.81)
 
@@ -455,6 +455,7 @@ class MainPage:
         modelEq = self.query["Model"]
         #retrieve the x values from the config file
         opt_x_data = self.query["opt_x_data"]
+        opt_y_data = self.query["opt_y_data"]
         x_axis = self.query["x_axis"]
 		#create a list to hold the generated y values
         Y_dataPoints = []
@@ -501,12 +502,16 @@ class MainPage:
             min_X = min(opt_x_data)
             max_Y = max(Y_dataPoints)
             min_Y = min(Y_dataPoints)
-            self.plot.lines.pop(0)
             if ((max_X != min_X) and (max_Y != min_Y)):
                 self.plot.set_xlim([min_X, max_X])
                 self.plot.set_ylim([min_Y, max_Y])
-            self.plot.plot(opt_x_data, Y_dataPoints, color='blue')  
-            self.canvas.draw()
+            if( flag == 1):
+                self.plot.lines.pop(0)
+                self.plot.plot(opt_x_data, Y_dataPoints, color='blue')  
+                self.canvas.draw()
+            else:
+                self.plot.scatter(opt_x_data, opt_y_data, color='red')  
+                self.canvas.draw()
 
 	#Called to update the paramaters from the configuration file
     def RedoConfig(self, selection):
@@ -520,7 +525,7 @@ class MainPage:
         loadModel(selection, self.metricIndex)
 
     #Solve for the goal value
-    def Solve(self, goal, x):
+    def Solve(self, goal, x, selected_param):
         try:
             goal_val = float(goal.get())
             x_val = float(x.get())
@@ -536,8 +541,8 @@ class MainPage:
         #target parameter to be solved
         target_var = self.currParam               
         tv = Symbol(target_var)
-        print("self.all_param_values:",self.all_param_values)
-        print("self.all_params:", self.allParams)
+        #print("self.all_param_values:",self.all_param_values)
+        #print("self.all_params:", self.allParams)
 
         modelEq = modelEq.replace(target_var, "tv")
         modelEq = modelEq.replace(currX_label, str(x_val))
@@ -547,7 +552,7 @@ class MainPage:
             if param != "tv":
                     modelEq = modelEq.replace(param, str(self.all_param_values[idx]))
         
-        print("modelEq:", modelEq)
+        #print("modelEq:", modelEq)
 
         if goal_val < 0:
             modelEq += str(goal_val)
@@ -555,9 +560,14 @@ class MainPage:
             modelEq += "-" + str(goal_val)
         func = eval(modelEq)
         res = solve(func)
-        print("Solve result:", res)
-        
-        return res
+        #print("Solve result:", res)
+        if(len(res) > 1):
+            self.all_param_values[selected_param] = res[1]
+        else:
+            self.all_param_values[selected_param] = res[0]
+        config_file.user_config["config_"+self.metricName][self.allParams[selected_param]] = self.all_param_values[selected_param]
+        self.DrawGraph(1)
+        #return res
 
     #Called to close the current window when transitioning to a new window    
     def Close(self, selection):
