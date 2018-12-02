@@ -541,8 +541,8 @@ class MainPage:
         #target parameter to be solved
         target_var = self.currParam               
         tv = Symbol(target_var)
-        #print("self.all_param_values:",self.all_param_values)
-        #print("self.all_params:", self.allParams)
+        print("self.all_param_values:",self.all_param_values)
+        print("self.all_params:", self.allParams)
 
         modelEq = modelEq.replace(target_var, "tv")
         modelEq = modelEq.replace(currX_label, str(x_val))
@@ -552,7 +552,7 @@ class MainPage:
             if param != "tv":
                     modelEq = modelEq.replace(param, str(self.all_param_values[idx]))
         
-        #print("modelEq:", modelEq)
+        print("modelEq:", modelEq)
 
         if goal_val < 0:
             modelEq += str(goal_val)
@@ -560,12 +560,13 @@ class MainPage:
             modelEq += "-" + str(goal_val)
         func = eval(modelEq)
         res = solve(func)
-        #print("Solve result:", res)
+        print("Solve result:", res)
         if(len(res) > 1):
             self.all_param_values[selected_param] = res[1]
         else:
             self.all_param_values[selected_param] = res[0]
         config_file.user_config["config_"+self.metricName][self.allParams[selected_param]] = self.all_param_values[selected_param]
+        update_config_file()
         self.DrawGraph(1)
         #return res
 
