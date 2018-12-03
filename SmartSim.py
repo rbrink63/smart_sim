@@ -322,21 +322,22 @@ class MainPage:
 		        #set the parameter being edited to the value entered in the textbox
                 self.all_param_values[index] = float(self.manualText.get())
                 splitText = self.manualText.get().split(".")
-                slider_resolution = 10**(-1*len(splitText[1]))
+                if len(splitText) > 1:
+                    slider_resolution = 10**(-1*len(splitText[1]))
+                else: 
+                    slider_resolution = 10**(-1)
 	            #update the configfile
                 config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
 			    #update the label associated with this parameter
                 self.Display_Parameters(1)
 			    #Redraw the graph
                 self.DrawGraph(1)
-
 			    #destroy the existing slider to avoid a memory leak
                 self.slider.destroy()
                 self.slider = tk.Scale(self.currentWindow, from_=float(self.manualText.get()) - 5.0, to=float(self.manualText.get()) + 5.0, resolution=slider_resolution, digits=6, orient="horizontal", length=450, command=getSliderValue)
                 self.slider.set(float(self.manualText.get()))
 			    #set the location within the window and font size
                 self.slider.place(relx=.21, rely=.92, anchor="center")
-                    
                 #Update the min, max and res labels of the slider 
                 self.minimum.delete(0, 20)
                 self.minimum.insert(0,float(self.all_param_values[index]) - 5.0)
