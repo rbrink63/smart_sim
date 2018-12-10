@@ -1,7 +1,7 @@
 #SmartSim GUI
+#Version 1.0
 
 #Imports
-#import importlib
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
@@ -14,10 +14,11 @@ import sys
 from sympy import solve, Symbol
 from config_funcs import get_optimizer_values, get_devsim_values, update_config_file
 
-# Create a root window that will be hidden. Will act as a driver to all other windows.
+# Create a root window that will be hidden. Will act as a driver to all other windows that may need to be spawned.
 root = tk.Tk()
 root.withdraw()
-slider_resolution = 0.01
+#This is the initial resolution of the slider and all other manual entry values
+slider_resolution = 0.00001
 
 try:
     # Check to see if application was called with an argument. Argumrnt must represent 
@@ -44,7 +45,7 @@ def loadModel(selection, selection_index):
     allParams = []
     #query will now hold all data for the selected model
     query = config_file.user_config[selected_model]
-    # create three different lists to hold the three different types of parameter
+    # create three different lists to hold the three different types of parameters
 	# and retrieve the values from the config file 
     design_params = query["design_params"]
     devsim_params = query["devsim_params"]
@@ -60,7 +61,7 @@ def loadModel(selection, selection_index):
     for index in range(len(optimizer_params)):
         allParams.append(optimizer_params[index])
 
-    #start parsing the model equation and filling in actual values for the params. Replace all design parameter variables with their associated values
+    #start parsing the model equation and filling in actual values for the params. Replace all parameter variables with their associated values
     for index in design_params:
         all_param_values.append(str(query[index]))
         modelEq = modelEq.replace(index, str(query[index]))
@@ -108,7 +109,7 @@ class MainPage:
         self.labels = []
         global slider_resolution
         
-        #Create the current window
+        #Create the main window
         self.currentWindow = tk.Toplevel(root)
 		#close the window if the user hits the 'x' button on the GUI
         self.currentWindow.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -165,15 +166,14 @@ class MainPage:
         for model in config_file.user_config:
             model_list.append(config_file.user_config[model]["Metric"])
         
-        #Sting to store the comboBox selection
+        #String to store the comboBox selection
         selected_model = tk.StringVar() 
         #COMBOBOX: Select Model to Load
         self.model_combo = ttk.Combobox(self.currentWindow, textvariable=selected_model)
-		#add the list to the combobox 
+		#add the model_list values to the combobox 
         self.model_combo['values'] = model_list
-		#set the default value to be displayed to the first index of the list
+		#set the default value to be displayed in the comboBox to the currently selected metric
         self.model_combo.current(self.metricIndex)
-
 		#set the location within the window and font size
         self.model_combo.place(relx=.02, rely=.24)
         
@@ -199,28 +199,26 @@ class MainPage:
         self.editCombo.current(0)
 		#set the location within the window and font size
         self.editCombo.place(relx=.2, rely=.24)
-                #set the current parameter
+        #set the current parameter
         self.currParam = selected_parameter.get()
         #Called when the user makes a selection within the combobox
         def editCallback(eventObject):
             self.Edit(selected_parameter.get(), self.editCombo.current(), 1)
             self.currParam = selected_parameter.get()
+		#binds the edit combobox to the editCallback function so that it is called when the user makes a selection
         self.editCombo.bind("<<ComboboxSelected>>", editCallback)
         
-        #Call the function that displays all te parameters
-        #self.Display_Parameters(self.allParams, self.all_param_values)
+        #Call the function that displays all the parameters in order to update them when a selection is made
         self.Display_Parameters(0)    
-
         #Call the function that draws the graph
         self.DrawGraph(0)
 		#update the parameter values of all labels
         self.Edit(allParams[0], 0, 0)
         
     #This function is called to display all parameters. 
-    #def Display_Parameters(self, allParams, all_param_values):
     def Display_Parameters(self, flag):
         # If this is not the first time the function is called than labels for the parameters already exist.
-		# Delete them as to avoid a memory leak
+		# These existing labels need to be deleted or the new ones are just drawn over them and they still exist.
         if(flag == 1):
             for index in range(len(self.allParams)):
                 currentLbl =self.labels[index]
@@ -257,13 +255,13 @@ class MainPage:
         self.currentLbl.place(relx=.21, rely=.975, anchor="center")
         self.currentLbl.config(font=("Courier", 10))
 
-    # This function is responsible for creating the smaller window that lets 
-    # you edit parameters
+    # This function is responsible for creating the widgets on the bottom left of the GUI that allow you to edit
+	# a parameter, set a goal value and use the slider. 
     def Edit(self, selection, index, flag):
         global slider_resolution
         if (flag == 1):
             # If this is not the first time the function is called than widgets already exist.
-            # Delete them.
+            # Delete them of the new ones will just be created on top of them and they will still exist.
             self.manualLbl.destroy()
             self.value.destroy()
             self.updateBtn.destroy()
@@ -278,7 +276,6 @@ class MainPage:
         #Update the labels
         self.Display_Parameters(1)
 		
-		#TODO: implement the twist
 		#LABEL: Set Goal Label
         self.goalLbl = tk.Label(self.currentWindow, text="Enter Target Value:")
 		#set the location within the window and font size
@@ -326,8 +323,15 @@ class MainPage:
                     slider_resolution = 10**(-1*len(splitText[1]))
                 else: 
                     slider_resolution = 10**(-1)
-	            #update the configfile
-                config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
+
+	            #update the configfile.
+                #check if the parameter is a devsim parameter
+                devsim_params = self.query["devsim_params"]
+                if self.allParams[index] in devsim_params:
+                    tempValue = config_file.user_config["config_"+self.metricName][self.allParams[index]][0]
+                    config_file.user_config["config_"+self.metricName][self.allParams[index]] = [tempValue,self.all_param_values[index]]
+                else:
+                    config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
 			    #update the label associated with this parameter
                 self.Display_Parameters(1)
 			    #Redraw the graph
@@ -416,8 +420,15 @@ class MainPage:
         def getSliderValue(value):
 			#update the parameter being edited
             self.all_param_values[index] = float(value)
-			#update the config file
-            config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
+			
+            #update the config file
+            #check if the parameter is a devsim parameter
+            devsim_params = self.query["devsim_params"]
+            if self.allParams[index] in devsim_params:
+                tempValue = config_file.user_config["config_"+self.metricName][self.allParams[index]][0]
+                config_file.user_config["config_"+self.metricName][self.allParams[index]] = [tempValue,self.all_param_values[index]]
+            else:
+                config_file.user_config["config_"+self.metricName][self.allParams[index]] = self.all_param_values[index]
             
             #reload the label associated with this parameter
             self.Display_Parameters(1)
@@ -430,7 +441,7 @@ class MainPage:
             update_config_file()
             
 		#SLIDER: slider that allows you to edit any given parameter
-        self.slider = tk.Scale(self.currentWindow, from_=float(self.all_param_values[index]) - 5.0, to=float(self.all_param_values[index]) + 5.0, orient="horizontal", length=450, digits=6, resolution=slider_resolution, command=getSliderValue)
+        self.slider = tk.Scale(self.currentWindow, from_=float(self.all_param_values[index]) - 5.0, to=float(self.all_param_values[index]) + 5.0, orient="horizontal", length=450, digits=10, resolution=slider_resolution, command=getSliderValue)
         self.slider.set(float(self.all_param_values[index]))
 		#set the location within the window and font size
         self.slider.place(relx=.21, rely=.92, anchor="center")
@@ -442,7 +453,7 @@ class MainPage:
 			#destroy the existing slider to avoid a memory leak
             self.slider.destroy()
             try:
-                self.slider = tk.Scale(self.currentWindow, from_=float(minimun.get()), to=float(maximun.get()), resolution=slider_resolution, digits=6, orient="horizontal", length=450, command=getSliderValue)
+                self.slider = tk.Scale(self.currentWindow, from_=float(minimun.get()), to=float(maximun.get()), resolution=slider_resolution, digits=10, orient="horizontal", length=450, command=getSliderValue)
 			    #set the location within the window and font size
                 self.slider.place(relx=.21, rely=.92, anchor="center")
             except: 
@@ -499,18 +510,30 @@ class MainPage:
 		#remove the existing plot if another one needs to be added. this is the redraw functionality 
         else:
             #Update the range of the graph
-            max_X = max(opt_x_data)
-            min_X = min(opt_x_data)
-            max_Y = max(Y_dataPoints)
-            min_Y = min(Y_dataPoints)
-            if ((max_X != min_X) and (max_Y != min_Y)):
-                self.plot.set_xlim([min_X, max_X])
-                self.plot.set_ylim([min_Y, max_Y])
             if( flag == 1):
-                self.plot.lines.pop(0)
+                max_X = max(opt_x_data)
+                min_X = min(opt_x_data)
+                max_Y = max(Y_dataPoints)
+                min_Y = min(Y_dataPoints)
+                if ((max_X != min_X) and (max_Y != min_Y)):
+                    self.plot.set_xlim([min_X, max_X])
+                    self.plot.set_ylim([min_Y, max_Y])
+                    self.plot.lines.pop(0)
                 self.plot.plot(opt_x_data, Y_dataPoints, color='blue')  
                 self.canvas.draw()
             else:
+                max_X = max(opt_x_data)
+                min_X = min(opt_x_data)
+                if (max(opt_y_data) < max(Y_dataPoints)):
+                    max_Y = max(Y_dataPoints)
+                else:
+                    max_Y = max(opt_y_data)
+                if (min(opt_y_data) > min(Y_dataPoints)):
+                    min_Y = min(Y_dataPoints)
+                else:
+                    min_Y = min(opt_y_data)
+                self.plot.set_xlim([min_X, max_X])
+                self.plot.set_ylim([min_Y, max_Y])
                 self.plot.scatter(opt_x_data, opt_y_data, color='red')  
                 self.canvas.draw()
 
@@ -542,8 +565,6 @@ class MainPage:
         #target parameter to be solved
         target_var = self.currParam               
         tv = Symbol(target_var)
-        #print("self.all_param_values:",self.all_param_values)
-        #print("self.all_params:", self.allParams)
 
         modelEq = modelEq.replace(target_var, "tv")
         modelEq = modelEq.replace(currX_label, str(x_val))
@@ -552,8 +573,6 @@ class MainPage:
         for idx, param in enumerate(self.allParams):
             if param != "tv":
                     modelEq = modelEq.replace(param, str(self.all_param_values[idx]))
-        
-        #print("modelEq:", modelEq)
 
         if goal_val < 0:
             modelEq += str(goal_val)
@@ -561,16 +580,26 @@ class MainPage:
             modelEq += "-" + str(goal_val)
         func = eval(modelEq)
         res = solve(func)
-        #print("Solve result:", res)
+
         if(len(res) > 1):
             self.all_param_values[selected_param] = res[1]
         else:
             self.all_param_values[selected_param] = res[0]
-        config_file.user_config["config_"+self.metricName][self.allParams[selected_param]] = self.all_param_values[selected_param]
+
+        #update the manual entry box to display current value
+        self.value.delete(0,10)
+        self.value.insert(0, self.all_param_values[selected_param])
+
+        #check if the parameter is a devsim parameter
+        devsim_params = self.query["devsim_params"]
+        if self.allParams[selected_param] in devsim_params:
+            tempValue = config_file.user_config["config_"+self.metricName][self.allParams[selected_param]][0]
+            config_file.user_config["config_"+self.metricName][self.allParams[selected_param]] = [tempValue,self.all_param_values[selected_param]]
+        else:
+            config_file.user_config["config_"+self.metricName][self.allParams[selected_param]] = self.all_param_values[selected_param]
         update_config_file()
-        self.Display_Parameters(0)
+        self.Display_Parameters(1)
         self.DrawGraph(1)
-        #return res
 
     #Called to close the current window when transitioning to a new window    
     def Close(self, selection):
@@ -590,10 +619,14 @@ class MainPage:
 def main():
     # This is a little nasty, but I had to use a for loop to get the first metric of 
     # the config file. Not sure how else to do it as it will not accept an integer and 
-    # I am not sure what models the file may contain. 
+    # I am not sure what models the file may contain. TODO: Find a cleaner solution to 
+	# this issue if time permits
     for metric in config_file.user_config:
         loadModel(config_file.user_config[metric]["Metric"], 0)
         break
+	# This try except loop had to be implemented due to a known bug with the current version of tkinter
+	# and Mac's OS. When a Mac user opens the GUI and attempts to scroll with a mouse the GUI will immediately
+	# crash. This is not an issue with our GUI, but tkinter itself. 
     while True:
         try:
             root.mainloop()
